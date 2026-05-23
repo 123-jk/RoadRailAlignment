@@ -5,12 +5,12 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.Arrays;
 
 public enum AlignmentMode {
-    STRAIGHT_LINE("两点直线", 2, true),
-    PI_CIRCULAR_ARC("三点圆曲线（可带缓和）", 3, true),
-    LARGE_SWEEP_ARC("大角度圆曲线/回环", 3, true),
-    TRANSITION_SPIRAL("缓和曲线近似", 3, false),
-    RAMP_FROM_SELECTED_WAY("从既有线接出匝道", 2, true),
-    RAMP_BETWEEN_SELECTED_WAYS("连接两条既有线", 2, true);
+    STRAIGHT_LINE("Two-point straight line", 2, true),
+    PI_CIRCULAR_ARC("Three-point circular curve (with transitions)", 3, true),
+    LARGE_SWEEP_ARC("Large-sweep circular curve/loop", 3, true),
+    TRANSITION_SPIRAL("Transition spiral approximation", 3, false),
+    RAMP_FROM_SELECTED_WAY("Ramp from existing way", 2, true),
+    RAMP_BETWEEN_SELECTED_WAYS("Connect two existing ways", 2, true);
 
     private final String displayName;
     private final int requiredPointCount;

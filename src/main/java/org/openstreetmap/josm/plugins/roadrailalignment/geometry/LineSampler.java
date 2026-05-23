@@ -15,11 +15,11 @@ public final class LineSampler {
 
     public static List<EastNorth> sample(EastNorth start, EastNorth end, double intervalMeters) {
         if (start == null || end == null || !start.isValid() || !end.isValid()) {
-            throw new IllegalArgumentException(tr("线形控制点无效。"));
+            throw new IllegalArgumentException(tr("Invalid alignment control points."));
         }
         double length = start.distance(end);
         if (length < MIN_LENGTH_METERS) {
-            throw new IllegalArgumentException(tr("两个控制点距离过近。"));
+            throw new IllegalArgumentException(tr("The two control points are too close."));
         }
 
         double interval = Math.max(1.0, intervalMeters);

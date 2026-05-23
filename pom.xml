@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
 
     <name>RoadRailAlignment</name>
-    <description>JOSM 道路、铁路和匝道平面线形绘制插件。</description>
+    <description>JOSM plugin for drawing road, rail, and ramp horizontal alignments.</description>
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
@@ -40,8 +40,12 @@
                     <archive>
                         <manifestEntries>
                             <Plugin-Class>org.openstreetmap.josm.plugins.roadrailalignment.RoadRailPlugin</Plugin-Class>
-                            <Plugin-Description>绘制道路、铁路和匝道平面线形。</Plugin-Description>
-                            <Plugin-Date>2026-05-20</Plugin-Date>
+                            <Plugin-Description>Draw road, rail, and ramp horizontal alignments.</Plugin-Description>
+                            <zh_CN_Plugin-Description>绘制道路、铁路和匝道平面线形。</zh_CN_Plugin-Description>
+                            <fr_Plugin-Description>Dessine les alignements horizontaux de routes, rails et bretelles.</fr_Plugin-Description>
+                            <de_Plugin-Description>Zeichnet horizontale Trassierungen für Straßen, Schienen und Rampen.</de_Plugin-Description>
+                            <es_Plugin-Description>Dibuja alineaciones horizontales de carreteras, ferrocarriles y ramales.</es_Plugin-Description>
+                            <Plugin-Date>2026-05-24</Plugin-Date>
                             <Plugin-Icon>images/mapmode/roadrailalignment.svg</Plugin-Icon>
                             <Plugin-Mainversion>14134</Plugin-Mainversion>
                             <Plugin-Version>${project.version}</Plugin-Version>

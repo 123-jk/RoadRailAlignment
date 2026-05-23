@@ -78,12 +78,12 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
     public AlignmentMapMode(AlignmentController controller, Runnable openWindowAction) {
         super(
-                tr("道路/铁路线形"),
+                tr("Road/Rail Alignment"),
                 "roadrailalignment",
-                tr("绘制道路、铁路和匝道平面线形"),
+                tr("Draw road, rail, and ramp horizontal alignments"),
                 Shortcut.registerShortcut(
                         "mapmode:roadrailalignment",
-                        tr("模式：{0}", tr("道路/铁路线形")),
+                        tr("Mode: {0}", tr("Road/Rail Alignment")),
                         KeyEvent.VK_R,
                         Shortcut.SHIFT),
                 Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -105,7 +105,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         mapView.addTemporaryLayer(previewPainter);
         mapView.setFocusable(true);
         mapView.requestFocusInWindow();
-        controller.setStatusMessage(tr("点击控制点以生成线形。"));
+        controller.setStatusMessage(tr("Click control points to generate an alignment."));
         if (openWindowAction != null) {
             SwingUtilities.invokeLater(openWindowAction);
         }
@@ -147,7 +147,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             int requiredPointCount = controller.getAlignmentMode().getRequiredPointCount();
             if (controller.getControlPointCount() < requiredPointCount) {
                 Logging.info(tr(
-                        "道路/铁路线形：已添加第 {0}/{1} 个控制点。",
+                        "Road/Rail Alignment: added control point {0}/{1}.",
                         controller.getControlPointCount(),
                         requiredPointCount));
                 repaintPreview(point);
@@ -164,8 +164,8 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     controller.getNodeSnapToleranceMeters(),
                     controlPoints);
             controller.setStatusMessage(lastGeneratedDetail == null || lastGeneratedDetail.isEmpty()
-                    ? tr("已生成线形，共 {0} 个节点。", way.getNodesCount())
-                    : tr("已生成线形，共 {0} 个节点。{1}", way.getNodesCount(), lastGeneratedDetail));
+                    ? tr("Generated alignment with {0} nodes.", way.getNodesCount())
+                    : tr("Generated alignment with {0} nodes. {1}", way.getNodesCount(), lastGeneratedDetail));
             keepEndPointForContinuousWork(sampledPoints);
             previewPainter.clear();
             mapView.repaint();
@@ -219,7 +219,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 continuousAnchorPoint = sourceTieIn.getPoint();
                 continuousExtensionTangent = sourceTieIn.getTangent().normalize();
                 bidirectionalExtensionSnap = true;
-                controller.setStatusMessage(tr("已吸附源线方向，下一点会沿该直线方向投影。"));
+                controller.setStatusMessage(tr("Snapped to the source way direction; the next point will be projected along it."));
                 return;
             }
         }
@@ -301,7 +301,10 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         if ((mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS)
                 && pendingStartTieIn != null
                 && controls.size() == 1) {
-            return sampleSingleTieRamp(cursor);
+            EastNorth rampTarget = mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
+                    ? snapControlPoint(cursor, mapView)
+                    : cursor;
+            return sampleSingleTieRamp(rampTarget);
         }
 
         if (mode == AlignmentMode.PI_CIRCULAR_ARC && controls.size() == 2) {
@@ -329,13 +332,13 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         // 正式生成阶段按模式选择对应采样器，匝道类模式还会带上回退逻辑。
         if (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY) {
             if (pendingStartTieIn == null) {
-                throw new IllegalArgumentException(tr("请先在一条选中的既有线附近点击接入点。"));
+                throw new IllegalArgumentException(tr("Click a tie-in point near one selected existing way first."));
             }
             return sampleSingleTieRamp(points.get(1));
         }
         if (mode == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS) {
             if (pendingStartTieIn == null || pendingEndTieIn == null) {
-                throw new IllegalArgumentException(tr("请先在两条选中的既有线附近分别点击接入点。"));
+                throw new IllegalArgumentException(tr("Click tie-in points near two selected existing ways first."));
             }
             return sampleTwoTieRamp();
         }
@@ -446,7 +449,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     effectiveTieInDirectionMode(),
                     controller.getSampleIntervalMeters());
         } catch (IllegalArgumentException exception) {
-            lastGeneratedDetail = tr("已插入中间直线。");
+            lastGeneratedDetail = tr("Inserted an intermediate straight segment.");
             return StraightInsertRampSampler.sample(
                     pendingStartTieIn,
                     pendingEndTieIn,
@@ -470,24 +473,24 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             OptimizedTwoTieRampSampler.Result result,
             boolean applyOptimizedParameters) {
         String radiusText = Double.isFinite(result.getDesignRadiusMeters())
-                ? tr("自动 R 约 {0} 米", Math.round(result.getDesignRadiusMeters()))
-                : tr("自动 R 近似直线");
+                ? tr("Automatic R about {0} m", Math.round(result.getDesignRadiusMeters()))
+                : tr("Automatic R approximates a straight line");
         String shapeText = radiusText;
         if (result.hasInsertedLoop()) {
-            shapeText = tr("{0}，已加入回环", shapeText);
+            shapeText = tr("{0}, inserted a loop", shapeText);
         } else if (result.hasInsertedStraight()) {
-            shapeText = tr("{0}，已使用圆弧/直线组合", shapeText);
+            shapeText = tr("{0}, used an arc/straight combination", shapeText);
         }
         if (result.usesSourceWayDirection()) {
-            shapeText = tr("{0}，按所在线方向", shapeText);
+            shapeText = tr("{0}, along source way direction", shapeText);
         }
         return applyOptimizedParameters
                 ? tr(
-                        "{0}，缓和曲线约 {1} 米。",
+                        "{0}, transition spiral about {1} m.",
                         shapeText,
                         Math.round(result.getTransitionLengthMeters()))
                 : tr(
-                        "{0}，缓和曲线约 {1} 米，参数栏未回填。",
+                        "{0}, transition spiral about {1} m; parameters were not applied.",
                         shapeText,
                         Math.round(result.getTransitionLengthMeters()));
     }
@@ -559,7 +562,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         List<EastNorth> controls = controller.snapshotControlPoints();
         previewPainter.setPreview(controls, controls);
         controller.setStatusMessage(tr(
-                "已回撤上一步。控制点：{0}/{1}",
+                "Undid last step. Control points: {0}/{1}",
                 controller.getControlPointCount(),
                 controller.getAlignmentMode().getRequiredPointCount()));
         if (mapView != null) {
@@ -573,7 +576,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         clearPendingState();
         clearContinuousExtension();
         previewPainter.clear();
-        controller.setStatusMessage(tr("已清空控制点。"));
+        controller.setStatusMessage(tr("Cleared control points."));
         if (mapView != null) {
             mapView.repaint();
         }
@@ -675,7 +678,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 || mode == AlignmentMode.PI_CIRCULAR_ARC
                 || mode == AlignmentMode.LARGE_SWEEP_ARC)) {
             controller.keepOnlyControlPoint(continuousAnchorPoint);
-            controller.setStatusMessage(tr("已复用上一段末端切线作为下一段起点方向。"));
+            controller.setStatusMessage(tr("Reused the previous segment end tangent as the next segment start direction."));
             MapView mapView = MainApplication.getMap() == null ? null : MainApplication.getMap().mapView;
             if (mapView != null) {
                 mapView.repaint();
@@ -703,13 +706,17 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 && mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
                 && sampledPoints != null
                 && !sampledPoints.isEmpty()) {
-            // 单端匝道保留的是几何终点和出口切线，不是原始接入点。
+            // 单端匝道保留几何终点，并把出口切线作为下一段的直线接续方向。
             EastNorth endPoint = sampledPoints.get(sampledPoints.size() - 1);
-            controller.clearControlPoints();
+            Vector2D tangent = endTangent(sampledPoints);
+            controller.keepOnlyControlPoint(endPoint);
             continuousAnchorPoint = endPoint;
-            continuousExtensionTangent = endTangent(sampledPoints);
+            continuousExtensionTangent = tangent;
             bidirectionalExtensionSnap = false;
-            controller.setStatusMessage(tr("已保留匝道终点和末端切线，切换到直线/曲线可继续作业。"));
+            if (tangent != null) {
+                pendingStartTieIn = new TieInPoint(endPoint, tangent, null, -1, 0.0, 0.0, Double.NaN, 0.0);
+            }
+            controller.setStatusMessage(tr("Kept the ramp end point and tangent as the next ramp start."));
             return;
         }
 
@@ -726,9 +733,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 clearContinuousExtension();
             }
             if (mode == AlignmentMode.PI_CIRCULAR_ARC || mode == AlignmentMode.LARGE_SWEEP_ARC) {
-                controller.setStatusMessage(tr("已保留曲线终点和出切线方向，供下一段直线复用。"));
+                controller.setStatusMessage(tr("Kept the curve end point and outgoing tangent for the next straight segment."));
             } else {
-                controller.setStatusMessage(tr("已保留终点作为下一条线的起点。"));
+                controller.setStatusMessage(tr("Kept the end point as the start of the next line."));
             }
         } else {
             controller.clearControlPoints();
@@ -766,7 +773,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         JOptionPane.showMessageDialog(
                 MainApplication.getMainFrame(),
                 message,
-                tr("道路/铁路线形"),
+                tr("Road/Rail Alignment"),
                 JOptionPane.WARNING_MESSAGE);
     }
 }

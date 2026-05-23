@@ -1,10 +1,12 @@
 package org.openstreetmap.josm.plugins.roadrailalignment.geometry;
 
 import java.util.List;
+import java.util.Map;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.plugins.roadrailalignment.AlignmentController;
 import org.openstreetmap.josm.plugins.roadrailalignment.AlignmentMode;
+import org.openstreetmap.josm.plugins.roadrailalignment.FeatureType;
 import org.openstreetmap.josm.plugins.roadrailalignment.TieInDirectionMode;
 import org.openstreetmap.josm.plugins.roadrailalignment.model.TieInPoint;
 
@@ -39,6 +41,7 @@ public final class GeometrySmokeTest {
         transitionSpiralProducesForwardPoints();
         recommendedSpiralLengthFollowsRadius();
         transitionSpiralModeIsHiddenFromMainUi();
+        featureTypePresetTagsCanWriteMultipleTags();
         controllerCanToggleOptimizedTwoTieRampParameterBackfill();
         controllerCanSetExtraLoopTurns();
         controllerCanSetTieInDirectionMode();
@@ -386,6 +389,19 @@ public final class GeometrySmokeTest {
             if (mode == AlignmentMode.TRANSITION_SPIRAL) {
                 throw new AssertionError("transition spiral approximation should not be shown as a main mode");
             }
+        }
+    }
+
+    private static void featureTypePresetTagsCanWriteMultipleTags() {
+        Map<String, String> motorwayTags = FeatureType.MOTORWAY_LINK.getTags();
+        if (!"motorway_link".equals(motorwayTags.get("highway"))) {
+            throw new AssertionError("motorway link preset should write highway=motorway_link");
+        }
+
+        Map<String, String> highSpeedRailTags = FeatureType.HIGH_SPEED_RAIL.getTags();
+        if (!"rail".equals(highSpeedRailTags.get("railway"))
+                || !"yes".equals(highSpeedRailTags.get("highspeed"))) {
+            throw new AssertionError("high-speed rail preset should write railway=rail + highspeed=yes");
         }
     }
 

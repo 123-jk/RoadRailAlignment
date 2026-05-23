@@ -38,7 +38,7 @@ public final class PiArcSampler {
 
         double turnAngle = angleBetween(incomingTangent, outgoingTangent);
         if (turnAngle < Math.toRadians(1.0) || Math.PI - turnAngle < Math.toRadians(1.0)) {
-            throw new IllegalArgumentException(tr("PI 转角过小或接近 180 度，无法生成圆曲线。"));
+            throw new IllegalArgumentException(tr("The PI deflection angle is too small or close to 180 degrees; a circular curve cannot be generated."));
         }
 
         double radius = Math.max(1.0, radiusMeters);
@@ -47,14 +47,14 @@ public final class PiArcSampler {
         double endLegLength = pi.distance(end);
         if (tangentLength >= startLegLength || tangentLength >= endLegLength) {
             throw new IllegalArgumentException(tr(
-                    "圆曲线半径过大，切线长超过 PI 两侧线段长度。请减小半径或拉远控制点。"));
+                    "The circular curve radius is too large; tangent length exceeds the segments on both sides of the PI. Reduce the radius or move the control points farther apart."));
         }
 
         EastNorth tangentStart = fromPiToStart.pointFrom(pi, tangentLength);
         EastNorth tangentEnd = fromPiToEnd.pointFrom(pi, tangentLength);
         double turnSign = Math.signum(incomingTangent.cross(outgoingTangent));
         if (Math.abs(turnSign) < EPS) {
-            throw new IllegalArgumentException(tr("所选 PI 点无法形成有效转向。"));
+            throw new IllegalArgumentException(tr("The selected PI point cannot form a valid turn."));
         }
 
         Vector centerOffsetAtStart = turnSign > 0
@@ -79,13 +79,13 @@ public final class PiArcSampler {
 
     private static void validate(EastNorth start, EastNorth pi, EastNorth end, double radiusMeters) {
         if (start == null || pi == null || end == null || !start.isValid() || !pi.isValid() || !end.isValid()) {
-            throw new IllegalArgumentException(tr("PI 控制点无效。"));
+            throw new IllegalArgumentException(tr("Invalid PI control points."));
         }
         if (start.distance(pi) < 0.01 || pi.distance(end) < 0.01) {
-            throw new IllegalArgumentException(tr("PI 两侧线段过短。"));
+            throw new IllegalArgumentException(tr("The segments on both sides of the PI are too short."));
         }
         if (radiusMeters <= 0.0) {
-            throw new IllegalArgumentException(tr("圆曲线半径必须大于 0。"));
+            throw new IllegalArgumentException(tr("The circular curve radius must be greater than 0."));
         }
     }
 
@@ -153,7 +153,7 @@ public final class PiArcSampler {
         private Vector normalize() {
             double length = Math.hypot(x, y);
             if (length < EPS) {
-                throw new IllegalArgumentException(tr("PI 线段长度为 0。"));
+                throw new IllegalArgumentException(tr("The PI segment length is 0."));
             }
             return new Vector(x / length, y / length);
         }

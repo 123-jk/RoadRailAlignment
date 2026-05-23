@@ -26,19 +26,19 @@ public final class ExistingWayAnalyzer {
 
     public static TieInPoint tieInFromSelectedWay(EastNorth clickPoint, double maxDistanceMeters) {
         if (clickPoint == null || !clickPoint.isValid()) {
-            throw new IllegalArgumentException(tr("接入点无效。"));
+            throw new IllegalArgumentException(tr("Invalid tie-in point."));
         }
 
         DataSet dataSet = MainApplication.getLayerManager().getEditDataSet();
         if (dataSet == null) {
-            throw new IllegalArgumentException(tr("创建匝道前，请先选中一条可编辑的既有线。"));
+            throw new IllegalArgumentException(tr("Select one editable existing way before creating a ramp."));
         }
 
         Way way = getSingleSelectedWay(dataSet);
         TieInPoint tieInPoint = projectToWay(way, clickPoint);
         if (tieInPoint.getDistanceToClickMeters() > maxDistanceMeters) {
             throw new IllegalArgumentException(tr(
-                    "点击位置距离选中线过远（{0} 米）。",
+                    "The clicked position is too far from the selected way ({0} m).",
                     Math.round(tieInPoint.getDistanceToClickMeters())));
         }
         return tieInPoint;
@@ -46,12 +46,12 @@ public final class ExistingWayAnalyzer {
 
     public static TieInPoint tieInFromNearestWay(EastNorth clickPoint, double maxDistanceMeters, Way excludedWay) {
         if (clickPoint == null || !clickPoint.isValid()) {
-            throw new IllegalArgumentException(tr("接入点无效。"));
+            throw new IllegalArgumentException(tr("Invalid tie-in point."));
         }
 
         DataSet dataSet = MainApplication.getLayerManager().getEditDataSet();
         if (dataSet == null) {
-            throw new IllegalArgumentException(tr("创建匝道前，请先加载可编辑数据图层。"));
+            throw new IllegalArgumentException(tr("Load an editable data layer before creating a ramp."));
         }
 
         // 扫描全部可用 Way，选出点击位置投影最近的那一条。
@@ -68,11 +68,11 @@ public final class ExistingWayAnalyzer {
         }
 
         if (bestTieIn == null) {
-            throw new IllegalArgumentException(tr("没有找到可用于接入的既有线。"));
+            throw new IllegalArgumentException(tr("No existing way was found for tie-in."));
         }
         if (bestTieIn.getDistanceToClickMeters() > maxDistanceMeters) {
             throw new IllegalArgumentException(tr(
-                    "点击位置距离最近既有线过远（{0} 米）。",
+                    "The clicked position is too far from the nearest existing way ({0} m).",
                     Math.round(bestTieIn.getDistanceToClickMeters())));
         }
         dataSet.setSelected(bestTieIn.getSourceWay());
@@ -96,17 +96,17 @@ public final class ExistingWayAnalyzer {
             double maxDistanceMeters,
             Way excludedWay) {
         if (clickPoint == null || !clickPoint.isValid()) {
-            throw new IllegalArgumentException(tr("接入点无效。"));
+            throw new IllegalArgumentException(tr("Invalid tie-in point."));
         }
 
         DataSet dataSet = MainApplication.getLayerManager().getEditDataSet();
         if (dataSet == null) {
-            throw new IllegalArgumentException(tr("创建匝道前，请先选中可编辑的既有线。"));
+            throw new IllegalArgumentException(tr("Select editable existing ways before creating a ramp."));
         }
 
         List<Way> ways = getSelectedWays(dataSet);
         if (ways.size() < 2 && excludedWay == null) {
-            throw new IllegalArgumentException(tr("双端匝道需要先选中两条既有线。"));
+            throw new IllegalArgumentException(tr("A two-end ramp requires two selected existing ways."));
         }
 
         // 双端匝道只在已选中的候选线里找最近的接入点。
@@ -122,11 +122,11 @@ public final class ExistingWayAnalyzer {
         }
 
         if (bestTieIn == null) {
-            throw new IllegalArgumentException(tr("没有找到另一条可用于接入的选中线。"));
+            throw new IllegalArgumentException(tr("No other selected way was found for tie-in."));
         }
         if (bestTieIn.getDistanceToClickMeters() > maxDistanceMeters) {
             throw new IllegalArgumentException(tr(
-                    "点击位置距离选中线过远（{0} 米）。",
+                    "The clicked position is too far from the selected way ({0} m).",
                     Math.round(bestTieIn.getDistanceToClickMeters())));
         }
         return bestTieIn;
@@ -137,12 +137,12 @@ public final class ExistingWayAnalyzer {
             return "";
         }
         String radiusText = Double.isFinite(tieInPoint.getEstimatedRadiusMeters())
-                ? tr("估算半径约 {0} 米，曲率 {1}",
+                ? tr("Estimated radius about {0} m, curvature {1}",
                         Math.round(tieInPoint.getEstimatedRadiusMeters()),
                         String.format("%.6f", tieInPoint.getEstimatedCurvature()))
-                : tr("直线或半径未知");
+                : tr("Straight line or unknown radius");
         return tr(
-                "接入：第 {0} 段，里程约 {1} 米，偏移 {2} 米，{3}",
+                "Tie-in: segment {0}, station about {1} m, offset {2} m, {3}",
                 tieInPoint.getSegmentIndex() + 1,
                 Math.round(tieInPoint.getStationMeters()),
                 Math.round(tieInPoint.getDistanceToClickMeters()),
@@ -187,11 +187,11 @@ public final class ExistingWayAnalyzer {
         }
 
         if (selectedWays.size() != 1) {
-            throw new IllegalArgumentException(tr("请只选择一条既有线作为匝道起点。"));
+            throw new IllegalArgumentException(tr("Select only one existing way as the ramp start."));
         }
         Way way = selectedWays.get(0);
         if (!isUsableWay(way)) {
-            throw new IllegalArgumentException(tr("选中线至少需要两个完整节点。"));
+            throw new IllegalArgumentException(tr("The selected way needs at least two complete nodes."));
         }
         return way;
     }
@@ -294,7 +294,7 @@ public final class ExistingWayAnalyzer {
         }
 
         if (bestPoint == null || bestTangent == null) {
-            throw new IllegalArgumentException(tr("选中线中没有可用线段。"));
+            throw new IllegalArgumentException(tr("The selected way has no usable segments."));
         }
 
         return new TieInPoint(

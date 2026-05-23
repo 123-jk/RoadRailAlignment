@@ -1,0 +1,857 @@
+{
+  "languages": [
+    "zh_CN",
+    "fr",
+    "de",
+    "es"
+  ],
+  "entries": [
+    {
+      "source": "Road/Rail Alignment",
+      "zh_CN": "道路/铁路线形",
+      "fr": "Alignement route/rail",
+      "de": "Straßen-/Schienen-Trassierung",
+      "es": "Alineación carretera/ferrocarril"
+    },
+    {
+      "source": "Draw road, rail, and ramp horizontal alignments",
+      "zh_CN": "绘制道路、铁路和匝道平面线形",
+      "fr": "Dessiner les alignements horizontaux de routes, rails et bretelles",
+      "de": "Horizontale Trassierungen für Straßen, Schienen und Rampen zeichnen",
+      "es": "Dibujar alineaciones horizontales de carreteras, ferrocarriles y ramales"
+    },
+    {
+      "source": "Draw road, rail, and ramp horizontal alignments.",
+      "zh_CN": "绘制道路、铁路和匝道平面线形。",
+      "fr": "Dessine les alignements horizontaux de routes, rails et bretelles.",
+      "de": "Zeichnet horizontale Trassierungen für Straßen, Schienen und Rampen.",
+      "es": "Dibuja alineaciones horizontales de carreteras, ferrocarriles y ramales."
+    },
+    {
+      "source": "Toggle: {0}",
+      "zh_CN": "开关：{0}",
+      "fr": "Basculer : {0}",
+      "de": "Umschalten: {0}",
+      "es": "Alternar: {0}"
+    },
+    {
+      "source": "Mode: {0}",
+      "zh_CN": "模式：{0}",
+      "fr": "Mode : {0}",
+      "de": "Modus: {0}",
+      "es": "Modo: {0}"
+    },
+    {
+      "source": "Road/Rail Alignment - Standalone Window",
+      "zh_CN": "道路/铁路线形 - 独立窗口",
+      "fr": "Alignement route/rail - fenêtre autonome",
+      "de": "Straßen-/Schienen-Trassierung - eigenständiges Fenster",
+      "es": "Alineación carretera/ferrocarril - ventana independiente"
+    },
+    {
+      "source": "Two-point straight line",
+      "zh_CN": "两点直线",
+      "fr": "Droite à deux points",
+      "de": "Zwei-Punkt-Gerade",
+      "es": "Recta de dos puntos"
+    },
+    {
+      "source": "Three-point circular curve (with transitions)",
+      "zh_CN": "三点圆曲线（可带缓和）",
+      "fr": "Courbe circulaire à trois points (avec transitions)",
+      "de": "Drei-Punkt-Kreisbogen (mit Übergängen)",
+      "es": "Curva circular de tres puntos (con transiciones)"
+    },
+    {
+      "source": "Large-sweep circular curve/loop",
+      "zh_CN": "大角度圆曲线/回环",
+      "fr": "Courbe circulaire à grand angle/boucle",
+      "de": "Kreisbogen mit großem Winkel/Schleife",
+      "es": "Curva circular de gran barrido/bucle"
+    },
+    {
+      "source": "Transition spiral approximation",
+      "zh_CN": "缓和曲线近似",
+      "fr": "Approximation de spirale de transition",
+      "de": "Näherung eines Übergangsbogens",
+      "es": "Aproximación de espiral de transición"
+    },
+    {
+      "source": "Ramp from existing way",
+      "zh_CN": "从既有线接出匝道",
+      "fr": "Bretelle depuis un chemin existant",
+      "de": "Rampe von bestehendem Weg",
+      "es": "Ramal desde una vía existente"
+    },
+    {
+      "source": "Connect two existing ways",
+      "zh_CN": "连接两条既有线",
+      "fr": "Connecter deux chemins existants",
+      "de": "Zwei bestehende Wege verbinden",
+      "es": "Conectar dos vías existentes"
+    },
+    {
+      "source": "Road",
+      "zh_CN": "道路",
+      "fr": "Route",
+      "de": "Straße",
+      "es": "Carretera"
+    },
+    {
+      "source": "Rail",
+      "zh_CN": "铁路",
+      "fr": "Rail",
+      "de": "Schiene",
+      "es": "Ferrocarril"
+    },
+    {
+      "source": "Motorway",
+      "zh_CN": "高速公路",
+      "fr": "Autoroute",
+      "de": "Autobahn",
+      "es": "Autopista"
+    },
+    {
+      "source": "Motorway link",
+      "zh_CN": "高速公路连接线",
+      "fr": "Bretelle d’autoroute",
+      "de": "Autobahnanschluss",
+      "es": "Enlace de autopista"
+    },
+    {
+      "source": "Trunk road",
+      "zh_CN": "干线公路",
+      "fr": "Route express",
+      "de": "Schnellstraße",
+      "es": "Vía rápida"
+    },
+    {
+      "source": "Primary road",
+      "zh_CN": "一级公路",
+      "fr": "Route principale",
+      "de": "Hauptstraße",
+      "es": "Carretera primaria"
+    },
+    {
+      "source": "High-speed rail",
+      "zh_CN": "高速铁路",
+      "fr": "Rail à grande vitesse",
+      "de": "Hochgeschwindigkeitsbahn",
+      "es": "Ferrocarril de alta velocidad"
+    },
+    {
+      "source": "Automatic toward target",
+      "zh_CN": "自动朝目标",
+      "fr": "Automatique vers la cible",
+      "de": "Automatisch zum Ziel",
+      "es": "Automático hacia el objetivo"
+    },
+    {
+      "source": "Along source way direction",
+      "zh_CN": "按所在线方向",
+      "fr": "Dans la direction du chemin source",
+      "de": "In Richtung des Quellwegs",
+      "es": "En la dirección de la vía de origen"
+    },
+    {
+      "source": "Reverse source way direction",
+      "zh_CN": "反向所在线",
+      "fr": "Direction inverse du chemin source",
+      "de": "Richtung des Quellwegs umkehren",
+      "es": "Dirección inversa de la vía de origen"
+    },
+    {
+      "source": "Use transition spirals",
+      "zh_CN": "使用缓和曲线",
+      "fr": "Utiliser des spirales de transition",
+      "de": "Übergangsbögen verwenden",
+      "es": "Usar espirales de transición"
+    },
+    {
+      "source": "Auto-optimize max R/transition for two-way connection",
+      "zh_CN": "两线连接自动最大 R/缓和",
+      "fr": "Optimiser automatiquement R max/transition pour deux chemins",
+      "de": "Max. R/Übergang für Zwei-Wege-Verbindung automatisch optimieren",
+      "es": "Optimizar automáticamente R máx./transición para conexión de dos vías"
+    },
+    {
+      "source": "Apply optimized parameters after generation",
+      "zh_CN": "生成后回填优化结果",
+      "fr": "Appliquer les paramètres optimisés après génération",
+      "de": "Optimierte Parameter nach dem Erzeugen übernehmen",
+      "es": "Aplicar parámetros optimizados después de generar"
+    },
+    {
+      "source": "Continuous work",
+      "zh_CN": "连续作业",
+      "fr": "Travail continu",
+      "de": "Fortlaufend arbeiten",
+      "es": "Trabajo continuo"
+    },
+    {
+      "source": "Snap to existing nodes",
+      "zh_CN": "吸附已有节点",
+      "fr": "Accrocher aux nœuds existants",
+      "de": "An vorhandene Knoten fangen",
+      "es": "Ajustar a nodos existentes"
+    },
+    {
+      "source": "Recommend by R",
+      "zh_CN": "按 R 推荐",
+      "fr": "Recommander selon R",
+      "de": "Nach R empfehlen",
+      "es": "Recomendar por R"
+    },
+    {
+      "source": "Clear control points",
+      "zh_CN": "清空控制点",
+      "fr": "Effacer les points de contrôle",
+      "de": "Kontrollpunkte löschen",
+      "es": "Borrar puntos de control"
+    },
+    {
+      "source": "Undo last step",
+      "zh_CN": "回撤一步",
+      "fr": "Annuler la dernière étape",
+      "de": "Letzten Schritt rückgängig machen",
+      "es": "Deshacer último paso"
+    },
+    {
+      "source": "Object type:",
+      "zh_CN": "对象类型：",
+      "fr": "Type d’objet :",
+      "de": "Objekttyp:",
+      "es": "Tipo de objeto:"
+    },
+    {
+      "source": "Drawing mode:",
+      "zh_CN": "绘制模式：",
+      "fr": "Mode de dessin :",
+      "de": "Zeichenmodus:",
+      "es": "Modo de dibujo:"
+    },
+    {
+      "source": "Sample interval:",
+      "zh_CN": "采样间距：",
+      "fr": "Intervalle d’échantillonnage :",
+      "de": "Abtastintervall:",
+      "es": "Intervalo de muestreo:"
+    },
+    {
+      "source": "Curve/minimum radius:",
+      "zh_CN": "曲线/最小半径：",
+      "fr": "Rayon de courbe/minimum :",
+      "de": "Kurven-/Mindestradius:",
+      "es": "Radio de curva/mínimo:"
+    },
+    {
+      "source": "Transition spiral length:",
+      "zh_CN": "缓和曲线长度：",
+      "fr": "Longueur de spirale de transition :",
+      "de": "Länge des Übergangsbogens:",
+      "es": "Longitud de espiral de transición:"
+    },
+    {
+      "source": "Node snap tolerance:",
+      "zh_CN": "节点吸附容差：",
+      "fr": "Tolérance d’accrochage des nœuds :",
+      "de": "Fangtoleranz für Knoten:",
+      "es": "Tolerancia de ajuste a nodos:"
+    },
+    {
+      "source": "Extra full turns:",
+      "zh_CN": "附加整圈数：",
+      "fr": "Tours complets supplémentaires :",
+      "de": "Zusätzliche volle Umdrehungen:",
+      "es": "Vueltas completas adicionales:"
+    },
+    {
+      "source": "Tie-in direction:",
+      "zh_CN": "接入方向：",
+      "fr": "Direction de raccordement :",
+      "de": "Anschlussrichtung:",
+      "es": "Dirección de conexión:"
+    },
+    {
+      "source": "Open standalone window",
+      "zh_CN": "打开独立窗口",
+      "fr": "Ouvrir la fenêtre autonome",
+      "de": "Eigenständiges Fenster öffnen",
+      "es": "Abrir ventana independiente"
+    },
+    {
+      "source": "Recommended transition spiral length {1} m for R={0} m.",
+      "zh_CN": "已按 R={0} 米推荐缓和曲线长度 {1} 米。",
+      "fr": "Longueur de spirale recommandée {1} m pour R={0} m.",
+      "de": "Empfohlene Übergangsbogenlänge {1} m für R={0} m.",
+      "es": "Longitud de espiral recomendada {1} m para R={0} m."
+    },
+    {
+      "source": "Cleared control points.",
+      "zh_CN": "已清空控制点。",
+      "fr": "Points de contrôle effacés.",
+      "de": "Kontrollpunkte gelöscht.",
+      "es": "Puntos de control borrados."
+    },
+    {
+      "source": "Undid last step. Control points: {0}/{1}",
+      "zh_CN": "已回撤上一步。控制点：{0}/{1}",
+      "fr": "Dernière étape annulée. Points de contrôle : {0}/{1}",
+      "de": "Letzter Schritt rückgängig gemacht. Kontrollpunkte: {0}/{1}",
+      "es": "Último paso deshecho. Puntos de control: {0}/{1}"
+    },
+    {
+      "source": "Control points: {0}/{1}",
+      "zh_CN": "控制点：{0}/{1}",
+      "fr": "Points de contrôle : {0}/{1}",
+      "de": "Kontrollpunkte: {0}/{1}",
+      "es": "Puntos de control: {0}/{1}"
+    },
+    {
+      "source": "Ready",
+      "zh_CN": "就绪",
+      "fr": "Prêt",
+      "de": "Bereit",
+      "es": "Listo"
+    },
+    {
+      "source": "Click control points to generate an alignment.",
+      "zh_CN": "点击控制点以生成线形。",
+      "fr": "Cliquer sur les points de contrôle pour générer un alignement.",
+      "de": "Kontrollpunkte anklicken, um eine Trassierung zu erzeugen.",
+      "es": "Haz clic en puntos de control para generar una alineación."
+    },
+    {
+      "source": "Road/Rail Alignment: added control point {0}/{1}.",
+      "zh_CN": "道路/铁路线形：已添加第 {0}/{1} 个控制点。",
+      "fr": "Alignement route/rail : point de contrôle {0}/{1} ajouté.",
+      "de": "Straßen-/Schienen-Trassierung: Kontrollpunkt {0}/{1} hinzugefügt.",
+      "es": "Alineación carretera/ferrocarril: punto de control {0}/{1} añadido."
+    },
+    {
+      "source": "Generated alignment with {0} nodes.",
+      "zh_CN": "已生成线形，共 {0} 个节点。",
+      "fr": "Alignement généré avec {0} nœuds.",
+      "de": "Trassierung mit {0} Knoten erzeugt.",
+      "es": "Alineación generada con {0} nodos."
+    },
+    {
+      "source": "Generated alignment with {0} nodes. {1}",
+      "zh_CN": "已生成线形，共 {0} 个节点。{1}",
+      "fr": "Alignement généré avec {0} nœuds. {1}",
+      "de": "Trassierung mit {0} Knoten erzeugt. {1}",
+      "es": "Alineación generada con {0} nodos. {1}"
+    },
+    {
+      "source": "Snapped to the source way direction; the next point will be projected along it.",
+      "zh_CN": "已吸附源线方向，下一点会沿该直线方向投影。",
+      "fr": "Accroché à la direction du chemin source ; le point suivant sera projeté sur cette direction.",
+      "de": "An die Richtung des Quellwegs gefangen; der nächste Punkt wird entlang dieser Richtung projiziert.",
+      "es": "Ajustado a la dirección de la vía de origen; el siguiente punto se proyectará sobre ella."
+    },
+    {
+      "source": "Click a tie-in point near one selected existing way first.",
+      "zh_CN": "请先在一条选中的既有线附近点击接入点。",
+      "fr": "Cliquer d’abord un point de raccordement près du chemin existant sélectionné.",
+      "de": "Zuerst einen Anschlusspunkt nahe einem ausgewählten bestehenden Weg anklicken.",
+      "es": "Haz clic primero en un punto de conexión cerca de una vía existente seleccionada."
+    },
+    {
+      "source": "Click tie-in points near two selected existing ways first.",
+      "zh_CN": "请先在两条选中的既有线附近分别点击接入点。",
+      "fr": "Cliquer d’abord des points de raccordement près de deux chemins existants sélectionnés.",
+      "de": "Zuerst Anschlusspunkte nahe zwei ausgewählten bestehenden Wegen anklicken.",
+      "es": "Haz clic primero en puntos de conexión cerca de dos vías existentes seleccionadas."
+    },
+    {
+      "source": "Inserted an intermediate straight segment.",
+      "zh_CN": "已插入中间直线。",
+      "fr": "Segment droit intermédiaire inséré.",
+      "de": "Zwischengerade eingefügt.",
+      "es": "Segmento recto intermedio insertado."
+    },
+    {
+      "source": "Automatic R about {0} m",
+      "zh_CN": "自动 R 约 {0} 米",
+      "fr": "R automatique environ {0} m",
+      "de": "Automatisches R etwa {0} m",
+      "es": "R automático aprox. {0} m"
+    },
+    {
+      "source": "Automatic R approximates a straight line",
+      "zh_CN": "自动 R 近似直线",
+      "fr": "R automatique proche de ligne droite",
+      "de": "Automatisches R entspricht näherungsweise einer Geraden",
+      "es": "R automático aproxima una recta"
+    },
+    {
+      "source": "{0}, inserted a loop",
+      "zh_CN": "{0}，已加入回环",
+      "fr": "{0}, boucle insérée",
+      "de": "{0}, Schleife eingefügt",
+      "es": "{0}, bucle insertado"
+    },
+    {
+      "source": "{0}, used an arc/straight combination",
+      "zh_CN": "{0}，已使用圆弧/直线组合",
+      "fr": "{0}, combinaison arc/droite utilisée",
+      "de": "{0}, Bogen-/Geradenkombination verwendet",
+      "es": "{0}, combinación arco/recta usada"
+    },
+    {
+      "source": "{0}, along source way direction",
+      "zh_CN": "{0}，按所在线方向",
+      "fr": "{0}, dans la direction du chemin source",
+      "de": "{0}, in Richtung des Quellwegs",
+      "es": "{0}, en la dirección de la vía de origen"
+    },
+    {
+      "source": "{0}, transition spiral about {1} m.",
+      "zh_CN": "{0}，缓和曲线约 {1} 米。",
+      "fr": "{0}, spirale de transition environ {1} m.",
+      "de": "{0}, Übergangsbogen etwa {1} m.",
+      "es": "{0}, espiral de transición aprox. {1} m."
+    },
+    {
+      "source": "{0}, transition spiral about {1} m; parameters were not applied.",
+      "zh_CN": "{0}，缓和曲线约 {1} 米，参数栏未回填。",
+      "fr": "{0}, spirale de transition environ {1} m ; paramètres non appliqués.",
+      "de": "{0}, Übergangsbogen etwa {1} m; Parameter wurden nicht übernommen.",
+      "es": "{0}, espiral de transición aprox. {1} m; parámetros no aplicados."
+    },
+    {
+      "source": "Reused the previous segment end tangent as the next segment start direction.",
+      "zh_CN": "已复用上一段末端切线作为下一段起点方向。",
+      "fr": "Tangente finale du segment précédent réutilisée comme direction de départ du segment suivant.",
+      "de": "Endtangente des vorherigen Segments als Startrichtung des nächsten Segments wiederverwendet.",
+      "es": "Tangente final del segmento anterior reutilizada como dirección inicial del siguiente segmento."
+    },
+    {
+      "source": "Kept the curve end point and outgoing tangent for the next straight segment.",
+      "zh_CN": "已保留曲线终点和出切线方向，供下一段直线复用。",
+      "fr": "Point final de courbe et tangente sortante conservés pour le prochain segment droit.",
+      "de": "Kurvenendpunkt und ausgehende Tangente für das nächste Geradensegment behalten.",
+      "es": "Punto final de curva y tangente saliente conservados para el siguiente segmento recto."
+    },
+    {
+      "source": "Kept the end point as the start of the next line.",
+      "zh_CN": "已保留终点作为下一条线的起点。",
+      "fr": "Point final conservé comme début de la ligne suivante.",
+      "de": "Endpunkt als Start der nächsten Linie behalten.",
+      "es": "Punto final conservado como inicio de la siguiente línea."
+    },
+    {
+      "source": "At least two points are required to generate a way.",
+      "zh_CN": "至少需要两个点才能生成线。",
+      "fr": "Au moins deux points sont requis pour générer un chemin.",
+      "de": "Mindestens zwei Punkte sind erforderlich, um einen Weg zu erzeugen.",
+      "es": "Se requieren al menos dos puntos para generar una vía."
+    },
+    {
+      "source": "Not enough valid nodes remain after snapping to generate a way.",
+      "zh_CN": "吸附后有效节点不足，无法生成线。",
+      "fr": "Après accrochage, il ne reste pas assez de nœuds valides pour générer un chemin.",
+      "de": "Nach dem Fangen bleiben nicht genug gültige Knoten zum Erzeugen eines Wegs übrig.",
+      "es": "Tras el ajuste no quedan nodos válidos suficientes para generar una vía."
+    },
+    {
+      "source": "Generate road/rail alignment",
+      "zh_CN": "生成道路/铁路线形",
+      "fr": "Générer un alignement route/rail",
+      "de": "Straßen-/Schienen-Trassierung erzeugen",
+      "es": "Generar alineación carretera/ferrocarril"
+    },
+    {
+      "source": "Road/Rail Alignment: generated a way with {0} nodes.",
+      "zh_CN": "道路/铁路线形：已生成一条包含 {0} 个节点的线。",
+      "fr": "Alignement route/rail : chemin généré avec {0} nœuds.",
+      "de": "Straßen-/Schienen-Trassierung: Weg mit {0} Knoten erzeugt.",
+      "es": "Alineación carretera/ferrocarril: vía generada con {0} nodos."
+    },
+    {
+      "source": "Invalid tie-in point.",
+      "zh_CN": "接入点无效。",
+      "fr": "Point de raccordement invalide.",
+      "de": "Ungültiger Anschlusspunkt.",
+      "es": "Punto de conexión no válido."
+    },
+    {
+      "source": "Select one editable existing way before creating a ramp.",
+      "zh_CN": "创建匝道前，请先选中一条可编辑的既有线。",
+      "fr": "Sélectionner un chemin existant modifiable avant de créer une bretelle.",
+      "de": "Vor dem Erstellen einer Rampe einen bearbeitbaren bestehenden Weg auswählen.",
+      "es": "Selecciona una vía existente editable antes de crear un ramal."
+    },
+    {
+      "source": "The clicked position is too far from the selected way ({0} m).",
+      "zh_CN": "点击位置距离选中线过远（{0} 米）。",
+      "fr": "La position cliquée est trop éloignée du chemin sélectionné ({0} m).",
+      "de": "Die angeklickte Position ist zu weit vom ausgewählten Weg entfernt ({0} m).",
+      "es": "La posición pulsada está demasiado lejos de la vía seleccionada ({0} m)."
+    },
+    {
+      "source": "Load an editable data layer before creating a ramp.",
+      "zh_CN": "创建匝道前，请先加载可编辑数据图层。",
+      "fr": "Charger un calque de données modifiable avant de créer une bretelle.",
+      "de": "Vor dem Erstellen einer Rampe eine bearbeitbare Datenebene laden.",
+      "es": "Carga una capa de datos editable antes de crear un ramal."
+    },
+    {
+      "source": "No existing way was found for tie-in.",
+      "zh_CN": "没有找到可用于接入的既有线。",
+      "fr": "Aucun chemin existant trouvé pour le raccordement.",
+      "de": "Kein bestehender Weg für den Anschluss gefunden.",
+      "es": "No se encontró ninguna vía existente para la conexión."
+    },
+    {
+      "source": "The clicked position is too far from the nearest existing way ({0} m).",
+      "zh_CN": "点击位置距离最近既有线过远（{0} 米）。",
+      "fr": "La position cliquée est trop éloignée du chemin existant le plus proche ({0} m).",
+      "de": "Die angeklickte Position ist zu weit vom nächsten bestehenden Weg entfernt ({0} m).",
+      "es": "La posición pulsada está demasiado lejos de la vía existente más cercana ({0} m)."
+    },
+    {
+      "source": "Select editable existing ways before creating a ramp.",
+      "zh_CN": "创建匝道前，请先选中可编辑的既有线。",
+      "fr": "Sélectionner des chemins existants modifiables avant de créer une bretelle.",
+      "de": "Vor dem Erstellen einer Rampe bearbeitbare bestehende Wege auswählen.",
+      "es": "Selecciona vías existentes editables antes de crear un ramal."
+    },
+    {
+      "source": "A two-end ramp requires two selected existing ways.",
+      "zh_CN": "双端匝道需要先选中两条既有线。",
+      "fr": "Une bretelle à deux extrémités requiert deux chemins existants sélectionnés.",
+      "de": "Eine zweiseitige Rampe erfordert zwei ausgewählte bestehende Wege.",
+      "es": "Un ramal de dos extremos requiere dos vías existentes seleccionadas."
+    },
+    {
+      "source": "No other selected way was found for tie-in.",
+      "zh_CN": "没有找到另一条可用于接入的选中线。",
+      "fr": "Aucun autre chemin sélectionné trouvé pour le raccordement.",
+      "de": "Kein anderer ausgewählter Weg für den Anschluss gefunden.",
+      "es": "No se encontró otra vía seleccionada para la conexión."
+    },
+    {
+      "source": "Estimated radius about {0} m, curvature {1}",
+      "zh_CN": "估算半径约 {0} 米，曲率 {1}",
+      "fr": "Rayon estimé environ {0} m, courbure {1}",
+      "de": "Geschätzter Radius etwa {0} m, Krümmung {1}",
+      "es": "Radio estimado aprox. {0} m, curvatura {1}"
+    },
+    {
+      "source": "Straight line or unknown radius",
+      "zh_CN": "直线或半径未知",
+      "fr": "Droite ou rayon inconnu",
+      "de": "Gerade oder unbekannter Radius",
+      "es": "Recta o radio desconocido"
+    },
+    {
+      "source": "Tie-in: segment {0}, station about {1} m, offset {2} m, {3}",
+      "zh_CN": "接入：第 {0} 段，里程约 {1} 米，偏移 {2} 米，{3}",
+      "fr": "Raccordement : segment {0}, station environ {1} m, décalage {2} m, {3}",
+      "de": "Anschluss: Segment {0}, Station etwa {1} m, Versatz {2} m, {3}",
+      "es": "Conexión: segmento {0}, estación aprox. {1} m, desplazamiento {2} m, {3}"
+    },
+    {
+      "source": "Select only one existing way as the ramp start.",
+      "zh_CN": "请只选择一条既有线作为匝道起点。",
+      "fr": "Sélectionner un seul chemin existant comme départ de la bretelle.",
+      "de": "Nur einen bestehenden Weg als Rampenanfang auswählen.",
+      "es": "Selecciona solo una vía existente como inicio del ramal."
+    },
+    {
+      "source": "The selected way needs at least two complete nodes.",
+      "zh_CN": "选中线至少需要两个完整节点。",
+      "fr": "Le chemin sélectionné nécessite au moins deux nœuds complets.",
+      "de": "Der ausgewählte Weg benötigt mindestens zwei vollständige Knoten.",
+      "es": "La vía seleccionada necesita al menos dos nodos completos."
+    },
+    {
+      "source": "The selected way has no usable segments.",
+      "zh_CN": "选中线中没有可用线段。",
+      "fr": "Le chemin sélectionné ne contient aucun segment utilisable.",
+      "de": "Der ausgewählte Weg enthält keine verwendbaren Segmente.",
+      "es": "La vía seleccionada no tiene segmentos utilizables."
+    },
+    {
+      "source": "The two tie-in points are too close.",
+      "zh_CN": "两个接入点距离过近。",
+      "fr": "Les deux points de raccordement sont trop proches.",
+      "de": "Die beiden Anschlusspunkte liegen zu nahe beieinander.",
+      "es": "Los dos puntos de conexión están demasiado cerca."
+    },
+    {
+      "source": "The middle segment radius of the two-end ramp is insufficient.",
+      "zh_CN": "双端匝道中间段半径不足。",
+      "fr": "Le rayon du segment central de la bretelle à deux extrémités est insuffisant.",
+      "de": "Der Radius des mittleren Segments der zweiseitigen Rampe ist nicht ausreichend.",
+      "es": "El radio del segmento central del ramal de dos extremos es insuficiente."
+    },
+    {
+      "source": "Two tie-in points are required.",
+      "zh_CN": "需要两个接入点。",
+      "fr": "Deux points de raccordement sont requis.",
+      "de": "Zwei Anschlusspunkte sind erforderlich.",
+      "es": "Se requieren dos puntos de conexión."
+    },
+    {
+      "source": "The minimum radius of the two-end ramp is {0} m, below the required {1} m.",
+      "zh_CN": "双端匝道最小半径 {0} 米，小于要求的 {1} 米。",
+      "fr": "Le rayon minimal de la bretelle à deux extrémités est {0} m, sous les {1} m requis.",
+      "de": "Der Mindestradius der zweiseitigen Rampe beträgt {0} m und liegt unter den erforderlichen {1} m.",
+      "es": "El radio mínimo del ramal de dos extremos es {0} m, inferior a los {1} m requeridos."
+    },
+    {
+      "source": "The two-end ramp tie-in points or tangents are invalid.",
+      "zh_CN": "双端匝道接入点或切线无效。",
+      "fr": "Les points de raccordement ou tangentes de la bretelle à deux extrémités sont invalides.",
+      "de": "Anschlusspunkte oder Tangenten der zweiseitigen Rampe sind ungültig.",
+      "es": "Los puntos de conexión o tangentes del ramal de dos extremos no son válidos."
+    },
+    {
+      "source": "The large-sweep circular curve end bearing is too close to the start point.",
+      "zh_CN": "大角度圆曲线终止方位与起点过近。",
+      "fr": "Le relèvement final de la courbe circulaire à grand angle est trop proche du point de départ.",
+      "de": "Die Endrichtung des Kreisbogens mit großem Winkel liegt zu nahe am Startpunkt.",
+      "es": "El rumbo final de la curva circular de gran barrido está demasiado cerca del punto inicial."
+    },
+    {
+      "source": "The transition spiral length is too large for the large-sweep circular curve.",
+      "zh_CN": "缓和曲线长度过大，已经超过大角度圆曲线可容纳范围。",
+      "fr": "La longueur de spirale de transition est trop grande pour la courbe circulaire à grand angle.",
+      "de": "Die Länge des Übergangsbogens ist für den Kreisbogen mit großem Winkel zu groß.",
+      "es": "La longitud de la espiral de transición es demasiado grande para la curva circular de gran barrido."
+    },
+    {
+      "source": "The large-sweep curve is expected to exceed {0} sampled points. Increase the sample interval or reduce extra turns.",
+      "zh_CN": "大角度曲线采样点预计超过 {0} 个，请增大采样间距或减小附加圈数。",
+      "fr": "La courbe à grand angle devrait dépasser {0} points échantillonnés. Augmenter l’intervalle ou réduire les tours supplémentaires.",
+      "de": "Die Kurve mit großem Winkel wird voraussichtlich mehr als {0} Abtastpunkte haben. Abtastintervall erhöhen oder Zusatzumdrehungen reduzieren.",
+      "es": "La curva de gran barrido superará previsiblemente {0} puntos muestreados. Aumenta el intervalo de muestreo o reduce las vueltas adicionales."
+    },
+    {
+      "source": "Invalid control points for the large-sweep circular curve.",
+      "zh_CN": "大角度圆曲线控制点无效。",
+      "fr": "Points de contrôle invalides pour la courbe circulaire à grand angle.",
+      "de": "Ungültige Kontrollpunkte für den Kreisbogen mit großem Winkel.",
+      "es": "Puntos de control no válidos para la curva circular de gran barrido."
+    },
+    {
+      "source": "The large-sweep circular curve start point and tangent direction point are too close.",
+      "zh_CN": "大角度圆曲线起点和切线方向点过近。",
+      "fr": "Le point de départ et le point de direction tangente de la courbe à grand angle sont trop proches.",
+      "de": "Startpunkt und Tangentenrichtungspunkt des Kreisbogens mit großem Winkel liegen zu nahe beieinander.",
+      "es": "El punto inicial y el punto de dirección tangente de la curva de gran barrido están demasiado cerca."
+    },
+    {
+      "source": "The large-sweep circular curve end bearing point is too close.",
+      "zh_CN": "大角度圆曲线终止方位点过近。",
+      "fr": "Le point de relèvement final de la courbe à grand angle est trop proche.",
+      "de": "Der Endrichtungspunkt des Kreisbogens mit großem Winkel liegt zu nahe.",
+      "es": "El punto de rumbo final de la curva de gran barrido está demasiado cerca."
+    },
+    {
+      "source": "The large-sweep circular curve radius must be greater than 0.",
+      "zh_CN": "大角度圆曲线半径必须大于 0。",
+      "fr": "Le rayon de la courbe circulaire à grand angle doit être supérieur à 0.",
+      "de": "Der Radius des Kreisbogens mit großem Winkel muss größer als 0 sein.",
+      "es": "El radio de la curva circular de gran barrido debe ser mayor que 0."
+    },
+    {
+      "source": "The number of extra full turns cannot be negative.",
+      "zh_CN": "附加整圈数不能小于 0。",
+      "fr": "Le nombre de tours complets supplémentaires ne peut pas être négatif.",
+      "de": "Die Anzahl zusätzlicher voller Umdrehungen darf nicht negativ sein.",
+      "es": "El número de vueltas completas adicionales no puede ser negativo."
+    },
+    {
+      "source": "Invalid alignment control points.",
+      "zh_CN": "线形控制点无效。",
+      "fr": "Points de contrôle d’alignement invalides.",
+      "de": "Ungültige Kontrollpunkte der Trassierung.",
+      "es": "Puntos de control de alineación no válidos."
+    },
+    {
+      "source": "The two control points are too close.",
+      "zh_CN": "两个控制点距离过近。",
+      "fr": "Les deux points de contrôle sont trop proches.",
+      "de": "Die beiden Kontrollpunkte liegen zu nahe beieinander.",
+      "es": "Los dos puntos de control están demasiado cerca."
+    },
+    {
+      "source": "Could not automatically optimize the two-way connection.",
+      "zh_CN": "无法自动优化两线连接。",
+      "fr": "Impossible d’optimiser automatiquement la connexion de deux chemins.",
+      "de": "Die Zwei-Wege-Verbindung konnte nicht automatisch optimiert werden.",
+      "es": "No se pudo optimizar automáticamente la conexión de dos vías."
+    },
+    {
+      "source": "The maximum usable R after automatic optimization is {0} m, still below the required {1} m. Move the tie-in points farther apart or lower the minimum radius.",
+      "zh_CN": "自动优化后的最大可用 R {0} 米，仍小于要求的 {1} 米。请拉远接入点或降低最小半径。",
+      "fr": "Le R maximal utilisable après optimisation automatique est {0} m, encore inférieur aux {1} m requis. Éloigner les points de raccordement ou réduire le rayon minimal.",
+      "de": "Das maximal nutzbare R nach der automatischen Optimierung beträgt {0} m und liegt noch unter den erforderlichen {1} m. Anschlusspunkte weiter auseinander setzen oder Mindestradius senken.",
+      "es": "El R máximo utilizable tras la optimización automática es {0} m, aún inferior a los {1} m requeridos. Separa más los puntos de conexión o reduce el radio mínimo."
+    },
+    {
+      "source": "The PI deflection angle is too small or close to 180 degrees; a circular curve cannot be generated.",
+      "zh_CN": "PI 转角过小或接近 180 度，无法生成圆曲线。",
+      "fr": "L’angle de déflexion PI est trop petit ou proche de 180 degrés ; une courbe circulaire ne peut pas être générée.",
+      "de": "Der PI-Ablenkwinkel ist zu klein oder nahe 180 Grad; ein Kreisbogen kann nicht erzeugt werden.",
+      "es": "El ángulo de deflexión PI es demasiado pequeño o cercano a 180 grados; no se puede generar una curva circular."
+    },
+    {
+      "source": "The circular curve radius is too large; tangent length exceeds the segments on both sides of the PI. Reduce the radius or move the control points farther apart.",
+      "zh_CN": "圆曲线半径过大，切线长超过 PI 两侧线段长度。请减小半径或拉远控制点。",
+      "fr": "Le rayon de la courbe circulaire est trop grand ; la longueur de tangente dépasse les segments des deux côtés du PI. Réduire le rayon ou éloigner les points de contrôle.",
+      "de": "Der Radius des Kreisbogens ist zu groß; die Tangentenlänge überschreitet die Segmente auf beiden Seiten des PI. Radius reduzieren oder Kontrollpunkte weiter auseinander setzen.",
+      "es": "El radio de la curva circular es demasiado grande; la longitud tangente supera los segmentos a ambos lados del PI. Reduce el radio o separa más los puntos de control."
+    },
+    {
+      "source": "The selected PI point cannot form a valid turn.",
+      "zh_CN": "所选 PI 点无法形成有效转向。",
+      "fr": "Le point PI sélectionné ne peut pas former un virage valide.",
+      "de": "Der ausgewählte PI-Punkt kann keine gültige Kurve bilden.",
+      "es": "El punto PI seleccionado no puede formar un giro válido."
+    },
+    {
+      "source": "Invalid PI control points.",
+      "zh_CN": "PI 控制点无效。",
+      "fr": "Points de contrôle PI invalides.",
+      "de": "Ungültige PI-Kontrollpunkte.",
+      "es": "Puntos de control PI no válidos."
+    },
+    {
+      "source": "The segments on both sides of the PI are too short.",
+      "zh_CN": "PI 两侧线段过短。",
+      "fr": "Les segments des deux côtés du PI sont trop courts.",
+      "de": "Die Segmente auf beiden Seiten des PI sind zu kurz.",
+      "es": "Los segmentos a ambos lados del PI son demasiado cortos."
+    },
+    {
+      "source": "The circular curve radius must be greater than 0.",
+      "zh_CN": "圆曲线半径必须大于 0。",
+      "fr": "Le rayon de la courbe circulaire doit être supérieur à 0.",
+      "de": "Der Radius des Kreisbogens muss größer als 0 sein.",
+      "es": "El radio de la curva circular debe ser mayor que 0."
+    },
+    {
+      "source": "The PI segment length is 0.",
+      "zh_CN": "PI 线段长度为 0。",
+      "fr": "La longueur du segment PI est 0.",
+      "de": "Die PI-Segmentlänge ist 0.",
+      "es": "La longitud del segmento PI es 0."
+    },
+    {
+      "source": "The PI deflection angle is too small or close to 180 degrees; a curve cannot be generated.",
+      "zh_CN": "PI 转角过小或接近 180 度，无法生成曲线。",
+      "fr": "L’angle de déflexion PI est trop petit ou proche de 180 degrés ; une courbe ne peut pas être générée.",
+      "de": "Der PI-Ablenkwinkel ist zu klein oder nahe 180 Grad; eine Kurve kann nicht erzeugt werden.",
+      "es": "El ángulo de deflexión PI es demasiado pequeño o cercano a 180 grados; no se puede generar una curva."
+    },
+    {
+      "source": "The transition spiral length is too large for the PI deflection angle.",
+      "zh_CN": "缓和曲线长度过大，已经超过 PI 转角可容纳范围。",
+      "fr": "La longueur de spirale de transition est trop grande pour l’angle de déflexion PI.",
+      "de": "Die Länge des Übergangsbogens ist für den PI-Ablenkwinkel zu groß.",
+      "es": "La longitud de la espiral de transición es demasiado grande para el ángulo de deflexión PI."
+    },
+    {
+      "source": "The transition-plus-circular curve tangent length is too large. Reduce the radius or transition spiral length.",
+      "zh_CN": "缓和曲线加圆曲线所需切线长过大，请减小半径或缓和曲线长度。",
+      "fr": "La longueur de tangente de la transition plus courbe circulaire est trop grande. Réduire le rayon ou la longueur de spirale.",
+      "de": "Die Tangentenlänge aus Übergangsbogen plus Kreisbogen ist zu groß. Radius oder Übergangsbogenlänge reduzieren.",
+      "es": "La longitud tangente de transición más curva circular es demasiado grande. Reduce el radio o la longitud de la espiral de transición."
+    },
+    {
+      "source": "Invalid ramp tie-in point or target point.",
+      "zh_CN": "匝道接入点或目标点无效。",
+      "fr": "Point de raccordement ou point cible de bretelle invalide.",
+      "de": "Ungültiger Rampen-Anschlusspunkt oder Zielpunkt.",
+      "es": "Punto de conexión o punto objetivo del ramal no válido."
+    },
+    {
+      "source": "The ramp target point is too close to the tie-in point.",
+      "zh_CN": "匝道目标点距离接入点过近。",
+      "fr": "Le point cible de la bretelle est trop proche du point de raccordement.",
+      "de": "Der Rampenzielpunkt liegt zu nahe am Anschlusspunkt.",
+      "es": "El punto objetivo del ramal está demasiado cerca del punto de conexión."
+    },
+    {
+      "source": "The target point is opposite the tie-in tangent direction.",
+      "zh_CN": "目标点位于接入切线的反方向。",
+      "fr": "Le point cible est dans la direction opposée à la tangente de raccordement.",
+      "de": "Der Zielpunkt liegt entgegen der Anschluss-Tangentenrichtung.",
+      "es": "El punto objetivo está en dirección opuesta a la tangente de conexión."
+    },
+    {
+      "source": "The tangent ramp radius is {0} m, below the minimum radius {1} m.",
+      "zh_CN": "切线接出匝道半径 {0} 米，小于最小半径 {1} 米。",
+      "fr": "Le rayon de la bretelle tangentielle est {0} m, sous le rayon minimal de {1} m.",
+      "de": "Der Radius der tangentialen Rampe beträgt {0} m und liegt unter dem Mindestradius {1} m.",
+      "es": "El radio del ramal tangencial es {0} m, inferior al radio mínimo {1} m."
+    },
+    {
+      "source": "Invalid transition spiral control points.",
+      "zh_CN": "缓和曲线控制点无效。",
+      "fr": "Points de contrôle de spirale de transition invalides.",
+      "de": "Ungültige Kontrollpunkte des Übergangsbogens.",
+      "es": "Puntos de control de espiral de transición no válidos."
+    },
+    {
+      "source": "The transition spiral length is too short.",
+      "zh_CN": "缓和曲线长度过短。",
+      "fr": "La longueur de spirale de transition est trop courte.",
+      "de": "Die Länge des Übergangsbogens ist zu kurz.",
+      "es": "La longitud de la espiral de transición es demasiado corta."
+    },
+    {
+      "source": "The transition spiral target radius must be greater than 0.",
+      "zh_CN": "缓和曲线目标半径必须大于 0。",
+      "fr": "Le rayon cible de la spirale de transition doit être supérieur à 0.",
+      "de": "Der Zielradius des Übergangsbogens muss größer als 0 sein.",
+      "es": "El radio objetivo de la espiral de transición debe ser mayor que 0."
+    },
+    {
+      "source": "Invalid transition spiral start point or tangent.",
+      "zh_CN": "缓和曲线起点或切线无效。",
+      "fr": "Point de départ ou tangente de spirale de transition invalide.",
+      "de": "Ungültiger Startpunkt oder ungültige Tangente des Übergangsbogens.",
+      "es": "Punto inicial o tangente de espiral de transición no válido."
+    },
+    {
+      "source": "Invalid tie-in points or tangents for the straight-insert connection.",
+      "zh_CN": "插入直线连接的接入点或切线无效。",
+      "fr": "Points de raccordement ou tangentes invalides pour la connexion avec droite insérée.",
+      "de": "Ungültige Anschlusspunkte oder Tangenten für die Verbindung mit eingefügter Gerade.",
+      "es": "Puntos de conexión o tangentes no válidos para la conexión con recta insertada."
+    },
+    {
+      "source": "Could not generate an arc/straight combination for the two-way connection.",
+      "zh_CN": "无法生成圆弧/直线组合的两线连接。",
+      "fr": "Impossible de générer une combinaison arc/droite pour la connexion de deux chemins.",
+      "de": "Bogen-/Geradenkombination für die Zwei-Wege-Verbindung konnte nicht erzeugt werden.",
+      "es": "No se pudo generar una combinación arco/recta para la conexión de dos vías."
+    },
+    {
+      "source": "The arc/straight two-way connection geometry is invalid.",
+      "zh_CN": "圆弧/直线组合两线连接几何不成立。",
+      "fr": "La géométrie de connexion arc/droite entre deux chemins est invalide.",
+      "de": "Die Geometrie der Bogen-/Geraden-Zwei-Wege-Verbindung ist ungültig.",
+      "es": "La geometría de conexión arco/recta de dos vías no es válida."
+    },
+    {
+      "source": "Cannot calculate a zero-length direction.",
+      "zh_CN": "零长度方向无法计算。",
+      "fr": "Impossible de calculer une direction de longueur nulle.",
+      "de": "Eine Richtung mit Länge null kann nicht berechnet werden.",
+      "es": "No se puede calcular una dirección de longitud cero."
+    },
+    {
+      "source": "Kept the ramp end point and tangent as the next ramp start.",
+      "zh_CN": "已保留匝道终点和切线作为下一段匝道起点。",
+      "fr": "Point final et tangente de la bretelle conservés comme départ de la bretelle suivante.",
+      "de": "Rampenendpunkt und Tangente als Start der nächsten Rampe beibehalten.",
+      "es": "Punto final y tangente del ramal conservados como inicio del siguiente ramal."
+    }
+  ]
+}

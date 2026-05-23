@@ -38,7 +38,7 @@ public final class Vector2D {
     public Vector2D normalize() {
         double length = length();
         if (length < EPS) {
-            throw new IllegalArgumentException(tr("零长度方向无法计算。"));
+            throw new IllegalArgumentException(tr("Cannot calculate a zero-length direction."));
         }
         return new Vector2D(x / length, y / length);
     }

@@ -31,7 +31,7 @@ public final class HermiteRampSampler {
             TieInDirectionMode directionMode,
             double intervalMeters) {
         if (startTieIn == null || endTieIn == null) {
-            throw new IllegalArgumentException(tr("需要两个接入点。"));
+            throw new IllegalArgumentException(tr("Two tie-in points are required."));
         }
 
         List<EastNorth> points = sampleWithHandleScale(
@@ -45,7 +45,7 @@ public final class HermiteRampSampler {
         double requiredMinRadius = Math.max(1.0, minRadiusMeters);
         if (Double.isFinite(minRadius) && minRadius < requiredMinRadius) {
             throw new IllegalArgumentException(tr(
-                    "双端匝道最小半径 {0} 米，小于要求的 {1} 米。",
+                    "The minimum radius of the two-end ramp is {0} m, below the required {1} m.",
                     RadiusFormatter.formatMetersBelowThreshold(minRadius, requiredMinRadius),
                     RadiusFormatter.formatThresholdMeters(requiredMinRadius, minRadius)));
         }
@@ -72,7 +72,7 @@ public final class HermiteRampSampler {
             TieInDirectionMode directionMode,
             double intervalMeters) {
         if (startTieIn == null || endTieIn == null) {
-            throw new IllegalArgumentException(tr("需要两个接入点。"));
+            throw new IllegalArgumentException(tr("Two tie-in points are required."));
         }
 
         EastNorth start = startTieIn.getPoint();
@@ -80,7 +80,7 @@ public final class HermiteRampSampler {
         Vector2D chord = Vector2D.between(start, end);
         double length = chord.length();
         if (length < MIN_LENGTH_METERS) {
-            throw new IllegalArgumentException(tr("两个接入点距离过近。"));
+            throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
         TieInDirectionUtil.Resolved direction = TieInDirectionUtil.resolve(startTieIn, endTieIn, directionMode);
@@ -102,12 +102,12 @@ public final class HermiteRampSampler {
             double intervalMeters) {
         if (start == null || end == null || !start.isValid() || !end.isValid()
                 || startTangent == null || endTangent == null) {
-            throw new IllegalArgumentException(tr("双端匝道接入点或切线无效。"));
+            throw new IllegalArgumentException(tr("The two-end ramp tie-in points or tangents are invalid."));
         }
         Vector2D chord = Vector2D.between(start, end);
         double length = chord.length();
         if (length < MIN_LENGTH_METERS) {
-            throw new IllegalArgumentException(tr("两个接入点距离过近。"));
+            throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
         Vector2D normalizedStartTangent = startTangent.normalize();

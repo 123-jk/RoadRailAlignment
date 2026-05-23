@@ -20,7 +20,7 @@ public final class AlignmentWindow extends JDialog {
     }
 
     public AlignmentWindow(AlignmentController controller, Runnable clearAction, Runnable undoAction) {
-        super(MainApplication.getMainFrame(), tr("道路/铁路线形 - 独立窗口"), false);
+        super(MainApplication.getMainFrame(), tr("Road/Rail Alignment - Standalone Window"), false);
         setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
         setLayout(new BorderLayout());
         add(new AlignmentPanel(controller, null, clearAction, undoAction), BorderLayout.CENTER);

@@ -20,14 +20,14 @@ public final class RampArcSampler {
             double minRadiusMeters,
             double intervalMeters) {
         if (tieInPoint == null || tieInPoint.getPoint() == null || target == null || !target.isValid()) {
-            throw new IllegalArgumentException(tr("匝道接入点或目标点无效。"));
+            throw new IllegalArgumentException(tr("Invalid ramp tie-in point or target point."));
         }
 
         EastNorth start = tieInPoint.getPoint();
         Vector2D offset = Vector2D.between(start, target);
         double targetDistance = offset.length();
         if (targetDistance < MIN_TARGET_DISTANCE_METERS) {
-            throw new IllegalArgumentException(tr("匝道目标点距离接入点过近。"));
+            throw new IllegalArgumentException(tr("The ramp target point is too close to the tie-in point."));
         }
 
         Vector2D tangent = tieInPoint.getTangent().normalize();
@@ -41,7 +41,7 @@ public final class RampArcSampler {
         if (Math.abs(signedDenominator) < EPS) {
             // 目标几乎落在切线上时直接退回直线，避免算出接近无穷大的半径。
             if (offset.dot(tangent) <= 0.0) {
-                throw new IllegalArgumentException(tr("目标点位于接入切线的反方向。"));
+                throw new IllegalArgumentException(tr("The target point is opposite the tie-in tangent direction."));
             }
             return LineSampler.sample(start, target, intervalMeters);
         }
@@ -52,7 +52,7 @@ public final class RampArcSampler {
         double requiredMinRadius = Math.max(1.0, minRadiusMeters);
         if (radius < requiredMinRadius) {
             throw new IllegalArgumentException(tr(
-                    "切线接出匝道半径 {0} 米，小于最小半径 {1} 米。",
+                    "The tangent ramp radius is {0} m, below the minimum radius {1} m.",
                     RadiusFormatter.formatMetersBelowThreshold(radius, requiredMinRadius),
                     RadiusFormatter.formatThresholdMeters(requiredMinRadius, radius)));
         }
@@ -64,12 +64,12 @@ public final class RampArcSampler {
 
     public static double signedCurvatureFromTangent(EastNorth start, Vector2D tangent, EastNorth target) {
         if (start == null || tangent == null || target == null || !start.isValid() || !target.isValid()) {
-            throw new IllegalArgumentException(tr("匝道接入点或目标点无效。"));
+            throw new IllegalArgumentException(tr("Invalid ramp tie-in point or target point."));
         }
 
         Vector2D offset = Vector2D.between(start, target);
         if (offset.length() < MIN_TARGET_DISTANCE_METERS) {
-            throw new IllegalArgumentException(tr("匝道目标点距离接入点过近。"));
+            throw new IllegalArgumentException(tr("The ramp target point is too close to the tie-in point."));
         }
 
         // 先把切线朝向目标，再用左法线判断曲率正负。

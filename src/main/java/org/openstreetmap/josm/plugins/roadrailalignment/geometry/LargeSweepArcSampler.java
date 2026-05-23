@@ -35,7 +35,7 @@ public final class LargeSweepArcSampler {
         double radius = Math.max(1.0, radiusMeters);
         double totalSweep = totalSweep(start, startTangent, endGuide, radius, turnSign, extraTurns);
         if (Math.abs(totalSweep) < MIN_SWEEP_RADIANS) {
-            throw new IllegalArgumentException(tr("大角度圆曲线终止方位与起点过近。"));
+            throw new IllegalArgumentException(tr("The large-sweep circular curve end bearing is too close to the start point."));
         }
 
         if (spiralLengthMeters > 0.0) {
@@ -101,7 +101,7 @@ public final class LargeSweepArcSampler {
         double spiralSweep = turnSign * spiralLength / (2.0 * radius);
         double circularSweep = totalSweep - 2.0 * spiralSweep;
         if (Math.signum(circularSweep) != turnSign || Math.abs(circularSweep) < MIN_SWEEP_RADIANS) {
-            throw new IllegalArgumentException(tr("缓和曲线长度过大，已经超过大角度圆曲线可容纳范围。"));
+            throw new IllegalArgumentException(tr("The transition spiral length is too large for the large-sweep circular curve."));
         }
 
         guardSamplePointCount(Math.abs(totalSweep) * radius + spiralLength, intervalMeters);
@@ -187,7 +187,7 @@ public final class LargeSweepArcSampler {
         int pointCount = Math.max(2, (int) Math.ceil(lengthMeters / Math.max(1.0, intervalMeters)) + 1);
         if (pointCount > MAX_SAMPLE_POINTS) {
             throw new IllegalArgumentException(tr(
-                    "大角度曲线采样点预计超过 {0} 个，请增大采样间距或减小附加圈数。",
+                    "The large-sweep curve is expected to exceed {0} sampled points. Increase the sample interval or reduce extra turns.",
                     MAX_SAMPLE_POINTS));
         }
     }
@@ -200,19 +200,19 @@ public final class LargeSweepArcSampler {
             int extraTurns) {
         if (start == null || tangentGuide == null || endGuide == null
                 || !start.isValid() || !tangentGuide.isValid() || !endGuide.isValid()) {
-            throw new IllegalArgumentException(tr("大角度圆曲线控制点无效。"));
+            throw new IllegalArgumentException(tr("Invalid control points for the large-sweep circular curve."));
         }
         if (start.distance(tangentGuide) < 0.01) {
-            throw new IllegalArgumentException(tr("大角度圆曲线起点和切线方向点过近。"));
+            throw new IllegalArgumentException(tr("The large-sweep circular curve start point and tangent direction point are too close."));
         }
         if (start.distance(endGuide) < 0.01) {
-            throw new IllegalArgumentException(tr("大角度圆曲线终止方位点过近。"));
+            throw new IllegalArgumentException(tr("The large-sweep circular curve end bearing point is too close."));
         }
         if (radiusMeters <= 0.0) {
-            throw new IllegalArgumentException(tr("大角度圆曲线半径必须大于 0。"));
+            throw new IllegalArgumentException(tr("The large-sweep circular curve radius must be greater than 0."));
         }
         if (extraTurns < 0) {
-            throw new IllegalArgumentException(tr("附加整圈数不能小于 0。"));
+            throw new IllegalArgumentException(tr("The number of extra full turns cannot be negative."));
         }
     }
 }

@@ -23,12 +23,12 @@ public final class AlignmentDialog extends ToggleDialog {
             Runnable clearAction,
             Runnable undoAction) {
         super(
-                tr("道路/铁路线形"),
+                tr("Road/Rail Alignment"),
                 "roadrailalignment",
-                tr("绘制道路、铁路和匝道平面线形"),
+                tr("Draw road, rail, and ramp horizontal alignments"),
                 Shortcut.registerShortcut(
                         "subwindow:roadrailalignment",
-                        tr("开关：{0}", tr("道路/铁路线形")),
+                        tr("Toggle: {0}", tr("Road/Rail Alignment")),
                         KeyEvent.VK_R,
                         Shortcut.ALT_CTRL),
                 220);

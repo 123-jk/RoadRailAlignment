@@ -105,7 +105,7 @@ public final class CompoundRampSampler {
         Vector2D chord = Vector2D.between(start, end);
         double length = chord.length();
         if (length < 2.0) {
-            throw new IllegalArgumentException(tr("两个接入点距离过近。"));
+            throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
         // 两端各预留一段缓和长度，中间主体再去补连接形状。
@@ -169,7 +169,7 @@ public final class CompoundRampSampler {
                     intervalMeters);
             double middleMinRadius = CurvatureEstimator.minRadius(middle);
             if (Double.isFinite(middleMinRadius) && middleMinRadius < Math.max(1.0, minRadiusMeters)) {
-                throw new IllegalArgumentException(tr("双端匝道中间段半径不足。"));
+                throw new IllegalArgumentException(tr("The middle segment radius of the two-end ramp is insufficient."));
             }
         } catch (IllegalArgumentException exception) {
             middle = StraightInsertRampSampler.sample(

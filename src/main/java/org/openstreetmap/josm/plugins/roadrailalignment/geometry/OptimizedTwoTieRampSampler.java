@@ -56,7 +56,7 @@ public final class OptimizedTwoTieRampSampler {
             TieInDirectionMode directionMode,
             double intervalMeters) {
         if (startTieIn == null || endTieIn == null) {
-            throw new IllegalArgumentException(tr("需要两个接入点。"));
+            throw new IllegalArgumentException(tr("Two tie-in points are required."));
         }
 
         EastNorth start = startTieIn.getPoint();
@@ -64,7 +64,7 @@ public final class OptimizedTwoTieRampSampler {
         Vector2D chord = Vector2D.between(start, end);
         double length = chord.length();
         if (length < 2.0) {
-            throw new IllegalArgumentException(tr("两个接入点距离过近。"));
+            throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
         TieInDirectionUtil.Resolved direction = TieInDirectionUtil.resolve(startTieIn, endTieIn, directionMode);
@@ -95,14 +95,14 @@ public final class OptimizedTwoTieRampSampler {
         }
 
         if (best == null) {
-            throw new IllegalArgumentException(tr("无法自动优化两线连接。"));
+            throw new IllegalArgumentException(tr("Could not automatically optimize the two-way connection."));
         }
 
         double requiredMinRadius = Math.max(1.0, requiredMinRadiusMeters);
         if (Double.isFinite(best.designRadiusMeters)
                 && best.designRadiusMeters < requiredMinRadius - MIN_RADIUS_TOLERANCE_METERS) {
             throw new IllegalArgumentException(tr(
-                    "自动优化后的最大可用 R {0} 米，仍小于要求的 {1} 米。请拉远接入点或降低最小半径。",
+                    "The maximum usable R after automatic optimization is {0} m, still below the required {1} m. Move the tie-in points farther apart or lower the minimum radius.",
                     RadiusFormatter.formatMetersBelowThreshold(best.designRadiusMeters, requiredMinRadius),
                     RadiusFormatter.formatThresholdMeters(requiredMinRadius, best.designRadiusMeters)));
         }

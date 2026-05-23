@@ -41,7 +41,7 @@ public final class StraightInsertRampSampler {
             TieInDirectionMode directionMode,
             double intervalMeters) {
         if (startTieIn == null || endTieIn == null) {
-            throw new IllegalArgumentException(tr("需要两个接入点。"));
+            throw new IllegalArgumentException(tr("Two tie-in points are required."));
         }
 
         EastNorth start = startTieIn.getPoint();
@@ -72,7 +72,7 @@ public final class StraightInsertRampSampler {
             double intervalMeters) {
         if (start == null || end == null || !start.isValid() || !end.isValid()
                 || startTangent == null || endTangent == null) {
-            throw new IllegalArgumentException(tr("插入直线连接的接入点或切线无效。"));
+            throw new IllegalArgumentException(tr("Invalid tie-in points or tangents for the straight-insert connection."));
         }
 
         double radius = Math.max(1.0, radiusMeters);
@@ -80,7 +80,7 @@ public final class StraightInsertRampSampler {
         double dy = end.north() - start.north();
         double distance = Math.hypot(dx, dy);
         if (distance < EPS) {
-            throw new IllegalArgumentException(tr("两个接入点距离过近。"));
+            throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
         double startHeading = Math.atan2(startTangent.y(), startTangent.x());
@@ -98,13 +98,13 @@ public final class StraightInsertRampSampler {
         best = better(best, rlr(alpha, beta, normalizedDistance));
         best = better(best, lrl(alpha, beta, normalizedDistance));
         if (best == null) {
-            throw new IllegalArgumentException(tr("无法生成圆弧/直线组合的两线连接。"));
+            throw new IllegalArgumentException(tr("Could not generate an arc/straight combination for the two-way connection."));
         }
         best = best.withExtraLoops(Math.max(0, extraLoopTurns));
 
         List<EastNorth> points = samplePath(start, startHeading, radius, best, intervalMeters);
         if (points.get(points.size() - 1).distance(end) > Math.max(0.01, radius * 1e-6)) {
-            throw new IllegalArgumentException(tr("圆弧/直线组合两线连接几何不成立。"));
+            throw new IllegalArgumentException(tr("The arc/straight two-way connection geometry is invalid."));
         }
         points.set(points.size() - 1, end);
         return points;

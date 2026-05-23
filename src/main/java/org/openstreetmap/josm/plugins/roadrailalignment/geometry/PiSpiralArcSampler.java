@@ -35,7 +35,7 @@ public final class PiSpiralArcSampler {
             return PiArcSampler.sample(start, pi, end, radiusMeters, intervalMeters, includeExitTangent);
         }
         if (start == null || pi == null || end == null || !start.isValid() || !pi.isValid() || !end.isValid()) {
-            throw new IllegalArgumentException(tr("PI 控制点无效。"));
+            throw new IllegalArgumentException(tr("Invalid PI control points."));
         }
 
         Vector2D fromPiToStart = Vector2D.between(pi, start).normalize();
@@ -44,25 +44,25 @@ public final class PiSpiralArcSampler {
         Vector2D outgoingTangent = fromPiToEnd;
         double turnAngle = Math.acos(Math.max(-1.0, Math.min(1.0, incomingTangent.dot(outgoingTangent))));
         if (turnAngle < MIN_ANGLE_RADIANS || Math.PI - turnAngle < MIN_ANGLE_RADIANS) {
-            throw new IllegalArgumentException(tr("PI 转角过小或接近 180 度，无法生成曲线。"));
+            throw new IllegalArgumentException(tr("The PI deflection angle is too small or close to 180 degrees; a curve cannot be generated."));
         }
 
         double turnSign = Math.signum(incomingTangent.cross(outgoingTangent));
         if (turnSign == 0.0) {
-            throw new IllegalArgumentException(tr("所选 PI 点无法形成有效转向。"));
+            throw new IllegalArgumentException(tr("The selected PI point cannot form a valid turn."));
         }
 
         double radius = Math.max(1.0, radiusMeters);
         double spiralLength = Math.max(0.0, spiralLengthMeters);
         double spiralAngle = spiralLength / (2.0 * radius);
         if (turnAngle <= 2.0 * spiralAngle) {
-            throw new IllegalArgumentException(tr("缓和曲线长度过大，已经超过 PI 转角可容纳范围。"));
+            throw new IllegalArgumentException(tr("The transition spiral length is too large for the PI deflection angle."));
         }
 
         double shift = spiralLength * spiralLength / (24.0 * radius);
         double tangentLength = (radius + shift) * Math.tan(turnAngle / 2.0) + spiralLength / 2.0;
         if (tangentLength >= start.distance(pi) || tangentLength >= pi.distance(end)) {
-            throw new IllegalArgumentException(tr("缓和曲线加圆曲线所需切线长过大，请减小半径或缓和曲线长度。"));
+            throw new IllegalArgumentException(tr("The transition-plus-circular curve tangent length is too large. Reduce the radius or transition spiral length."));
         }
 
         EastNorth ts = fromPiToStart.pointFrom(pi, tangentLength);

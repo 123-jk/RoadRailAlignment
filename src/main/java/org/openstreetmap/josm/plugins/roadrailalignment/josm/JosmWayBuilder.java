@@ -38,7 +38,7 @@ public final class JosmWayBuilder {
             double nodeSnapToleranceMeters,
             List<EastNorth> anchorPoints) {
         if (eastNorthPoints == null || eastNorthPoints.size() < 2) {
-            throw new IllegalArgumentException(tr("至少需要两个点才能生成线。"));
+            throw new IllegalArgumentException(tr("At least two points are required to generate a way."));
         }
 
         DataSet dataSet = ensureEditDataSet();
@@ -64,12 +64,12 @@ public final class JosmWayBuilder {
             }
         }
         if (nodes.size() < 2) {
-            throw new IllegalArgumentException(tr("吸附后有效节点不足，无法生成线。"));
+            throw new IllegalArgumentException(tr("Not enough valid nodes remain after snapping to generate a way."));
         }
 
         Way way = new Way();
         way.setNodes(nodes);
-        way.put(featureType.getTagKey(), featureType.getTagValue());
+        featureType.getTags().forEach(way::put);
         way.put("source", SOURCE_TAG_VALUE);
 
         List<Command> commands = new ArrayList<>(newNodes.size() + 1);
@@ -79,11 +79,11 @@ public final class JosmWayBuilder {
         commands.add(new AddCommand(dataSet, way));
 
         UndoRedoHandler.getInstance().add(new SequenceCommand(
-                tr("生成道路/铁路线形"),
+                tr("Generate road/rail alignment"),
                 commands));
         dataSet.setSelected(way);
         MainApplication.getMap().mapView.repaint();
-        Logging.info(tr("道路/铁路线形：已生成一条包含 {0} 个节点的线。", nodes.size()));
+        Logging.info(tr("Road/Rail Alignment: generated a way with {0} nodes.", nodes.size()));
         return way;
     }
 
@@ -93,7 +93,7 @@ public final class JosmWayBuilder {
             return dataSet;
         }
 
-        OsmDataLayer layer = new OsmDataLayer(new DataSet(), tr("道路/铁路线形"), null);
+        OsmDataLayer layer = new OsmDataLayer(new DataSet(), tr("Road/Rail Alignment"), null);
         MainApplication.getLayerManager().addLayer(layer);
         MainApplication.getLayerManager().setActiveLayer(layer);
         return layer.getDataSet();

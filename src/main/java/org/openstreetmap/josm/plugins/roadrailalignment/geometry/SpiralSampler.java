@@ -21,17 +21,17 @@ public final class SpiralSampler {
             double intervalMeters) {
         if (start == null || tangentGuide == null || sideGuide == null
                 || !start.isValid() || !tangentGuide.isValid() || !sideGuide.isValid()) {
-            throw new IllegalArgumentException(tr("缓和曲线控制点无效。"));
+            throw new IllegalArgumentException(tr("Invalid transition spiral control points."));
         }
 
         Vector2D tangent = Vector2D.between(start, tangentGuide).normalize();
         Vector2D side = Vector2D.between(start, sideGuide);
         double length = start.distance(tangentGuide);
         if (length < MIN_LENGTH_METERS) {
-            throw new IllegalArgumentException(tr("缓和曲线长度过短。"));
+            throw new IllegalArgumentException(tr("The transition spiral length is too short."));
         }
         if (targetRadiusMeters <= 0.0) {
-            throw new IllegalArgumentException(tr("缓和曲线目标半径必须大于 0。"));
+            throw new IllegalArgumentException(tr("The transition spiral target radius must be greater than 0."));
         }
 
         double turnSign = Math.signum(tangent.cross(side));
@@ -69,10 +69,10 @@ public final class SpiralSampler {
             double lengthMeters,
             double intervalMeters) {
         if (start == null || !start.isValid() || startTangent == null) {
-            throw new IllegalArgumentException(tr("缓和曲线起点或切线无效。"));
+            throw new IllegalArgumentException(tr("Invalid transition spiral start point or tangent."));
         }
         if (lengthMeters < MIN_LENGTH_METERS) {
-            throw new IllegalArgumentException(tr("缓和曲线长度过短。"));
+            throw new IllegalArgumentException(tr("The transition spiral length is too short."));
         }
 
         Vector2D tangent = startTangent.normalize();

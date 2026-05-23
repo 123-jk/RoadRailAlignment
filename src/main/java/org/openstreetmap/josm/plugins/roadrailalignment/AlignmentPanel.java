@@ -142,21 +142,21 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             }
         });
 
-        spiralTransitionCheckBox = new JCheckBox(tr("使用缓和曲线"));
+        spiralTransitionCheckBox = new JCheckBox(tr("Use transition spirals"));
         spiralTransitionCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setUseSpiralTransitions(spiralTransitionCheckBox.isSelected());
             }
         });
 
-        autoOptimizeTwoTieCheckBox = new JCheckBox(tr("两线连接自动最大 R/缓和"));
+        autoOptimizeTwoTieCheckBox = new JCheckBox(tr("Auto-optimize max R/transition for two-way connection"));
         autoOptimizeTwoTieCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setAutoOptimizeTwoTieRamp(autoOptimizeTwoTieCheckBox.isSelected());
             }
         });
 
-        applyOptimizedTwoTieParametersCheckBox = new JCheckBox(tr("生成后回填优化结果"));
+        applyOptimizedTwoTieParametersCheckBox = new JCheckBox(tr("Apply optimized parameters after generation"));
         applyOptimizedTwoTieParametersCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setApplyOptimizedTwoTieRampParameters(
@@ -164,14 +164,14 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             }
         });
 
-        continuousCheckBox = new JCheckBox(tr("连续作业"));
+        continuousCheckBox = new JCheckBox(tr("Continuous work"));
         continuousCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setContinuousMode(continuousCheckBox.isSelected());
             }
         });
 
-        nodeSnapCheckBox = new JCheckBox(tr("吸附已有节点"));
+        nodeSnapCheckBox = new JCheckBox(tr("Snap to existing nodes"));
         nodeSnapCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setSnapToExistingNodes(nodeSnapCheckBox.isSelected());
@@ -207,16 +207,16 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             }
         });
 
-        JButton recommendSpiralButton = new JButton(tr("按 R 推荐"));
+        JButton recommendSpiralButton = new JButton(tr("Recommend by R"));
         recommendSpiralButton.addActionListener(event -> applyRecommendedSpiralLength());
 
         JPanel spiralLengthPanel = new JPanel(new BorderLayout(4, 0));
         spiralLengthPanel.add(spiralLengthSpinner, BorderLayout.CENTER);
         spiralLengthPanel.add(recommendSpiralButton, BorderLayout.EAST);
 
-        JButton clearButton = new JButton(tr("清空控制点"));
+        JButton clearButton = new JButton(tr("Clear control points"));
         clearButton.addActionListener(event -> clearInput());
-        JButton undoButton = new JButton(tr("回撤一步"));
+        JButton undoButton = new JButton(tr("Undo last step"));
         undoButton.addActionListener(event -> undoInput());
 
         GridBagConstraints gc = new GridBagConstraints();
@@ -224,7 +224,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy = 0;
         gc.anchor = GridBagConstraints.WEST;
         gc.insets = new Insets(0, 0, 6, 6);
-        add(new JLabel(tr("对象类型：")), gc);
+        add(new JLabel(tr("Object type:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -235,7 +235,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("绘制模式：")), gc);
+        add(new JLabel(tr("Drawing mode:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -246,7 +246,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("采样间距：")), gc);
+        add(new JLabel(tr("Sample interval:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -257,7 +257,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("曲线/最小半径：")), gc);
+        add(new JLabel(tr("Curve/minimum radius:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -268,7 +268,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("缓和曲线长度：")), gc);
+        add(new JLabel(tr("Transition spiral length:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -299,7 +299,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridwidth = 1;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("节点吸附容差：")), gc);
+        add(new JLabel(tr("Node snap tolerance:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -310,7 +310,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("附加整圈数：")), gc);
+        add(new JLabel(tr("Extra full turns:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -321,7 +321,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridy++;
         gc.weightx = 0.0;
         gc.fill = GridBagConstraints.NONE;
-        add(new JLabel(tr("接入方向：")), gc);
+        add(new JLabel(tr("Tie-in direction:")), gc);
 
         gc.gridx = 1;
         gc.weightx = 1.0;
@@ -329,7 +329,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         add(tieInDirectionComboBox, gc);
 
         if (openWindowAction != null) {
-            JButton openWindowButton = new JButton(tr("打开独立窗口"));
+            JButton openWindowButton = new JButton(tr("Open standalone window"));
             openWindowButton.addActionListener(event -> openWindowAction.run());
             gc.gridx = 0;
             gc.gridy++;
@@ -360,7 +360,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         controller.setUseSpiralTransitions(true);
         controller.setSpiralLengthMeters(recommended);
         controller.setStatusMessage(tr(
-                "已按 R={0} 米推荐缓和曲线长度 {1} 米。",
+                "Recommended transition spiral length {1} m for R={0} m.",
                 Math.round(radius),
                 Math.round(recommended)));
         updateAllControls();
@@ -371,7 +371,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             clearAction.run();
         } else {
             controller.clearControlPoints();
-            controller.setStatusMessage(tr("已清空控制点。"));
+            controller.setStatusMessage(tr("Cleared control points."));
         }
     }
 
@@ -380,7 +380,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             undoAction.run();
         } else if (controller.removeLastControlPoint()) {
             controller.setStatusMessage(tr(
-                    "已回撤上一步。控制点：{0}/{1}",
+                    "Undid last step. Control points: {0}/{1}",
                     controller.getControlPointCount(),
                     controller.getAlignmentMode().getRequiredPointCount()));
         }
@@ -461,13 +461,13 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
 
     private void updateControlPointLabel() {
         controlPointLabel.setText(tr(
-                "控制点：{0}/{1}",
+                "Control points: {0}/{1}",
                 controller.getControlPointCount(),
                 controller.getAlignmentMode().getRequiredPointCount()));
     }
 
     private void updateStatusLabel() {
         String message = controller.getStatusMessage();
-        statusLabel.setText(message == null || message.isEmpty() ? tr("就绪") : message);
+        statusLabel.setText(message == null || message.isEmpty() ? tr("Ready") : message);
     }
 }
