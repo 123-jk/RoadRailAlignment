@@ -1,0 +1,55 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.openstreetmap.josm.plugins</groupId>
+    <artifactId>RoadRailAlignment</artifactId>
+    <version>0.1.20</version>
+    <packaging>jar</packaging>
+
+    <name>RoadRailAlignment</name>
+    <description>JOSM 道路、铁路和匝道平面线形绘制插件。</description>
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openstreetmap.josm</groupId>
+            <artifactId>josm</artifactId>
+            <version>tested</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/josm-tested.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>RoadRailAlignment</finalName>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Plugin-Class>org.openstreetmap.josm.plugins.roadrailalignment.RoadRailPlugin</Plugin-Class>
+                            <Plugin-Description>绘制道路、铁路和匝道平面线形。</Plugin-Description>
+                            <Plugin-Date>2026-05-20</Plugin-Date>
+                            <Plugin-Icon>images/mapmode/roadrailalignment.svg</Plugin-Icon>
+                            <Plugin-Mainversion>14134</Plugin-Mainversion>
+                            <Plugin-Version>${project.version}</Plugin-Version>
+                            <Plugin-Canloadatruntime>true</Plugin-Canloadatruntime>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

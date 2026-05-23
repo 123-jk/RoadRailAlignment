@@ -1,0 +1,34 @@
+# Build outputs
+/build/
+/dist/
+/target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Local JOSM dependency downloaded by tools/download-josm.ps1
+/lib/
+
+# Maven / Java noise
+/.mvn/timing.properties
+dependency-reduced-pom.xml
+hs_err_pid*
+replay_pid*
+
+# IDE / editor metadata
+/.idea/
+/.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and local scratch files
+*.log
+*.tmp
+*.bak
