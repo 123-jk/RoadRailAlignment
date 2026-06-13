@@ -25,6 +25,7 @@ public final class AlignmentController {
     public static final String PROP_STATUS = "statusMessage";
     public static final String PROP_CONTINUOUS_MODE = "continuousMode";
     public static final String PROP_USE_SPIRAL_TRANSITIONS = "useSpiralTransitions";
+    public static final String PROP_CONTINUOUS_RAMP_CURVATURE = "continuousRampCurvature";
     public static final String PROP_AUTO_OPTIMIZE_TWO_TIE = "autoOptimizeTwoTieRamp";
     public static final String PROP_APPLY_OPTIMIZED_TWO_TIE_PARAMETERS = "applyOptimizedTwoTieRampParameters";
     public static final String PROP_SNAP_TO_EXISTING_NODES = "snapToExistingNodes";
@@ -35,13 +36,14 @@ public final class AlignmentController {
     private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
     private final List<EastNorth> controlPoints = new ArrayList<>();
     private FeatureType featureType = FeatureType.ROAD;
-    private AlignmentMode alignmentMode = AlignmentMode.STRAIGHT_LINE;
+    private AlignmentMode alignmentMode = AlignmentMode.BASIC_ALIGNMENT;
     private double sampleIntervalMeters = 20.0;
     private double radiusMeters = 200.0;
     private double spiralLengthMeters = 60.0;
     private String statusMessage = "";
     private boolean continuousMode = true;
     private boolean useSpiralTransitions = true;
+    private boolean continuousRampCurvature = true;
     private boolean autoOptimizeTwoTieRamp = true;
     private boolean applyOptimizedTwoTieRampParameters = false;
     private boolean snapToExistingNodes = true;
@@ -201,6 +203,19 @@ public final class AlignmentController {
         }
         this.useSpiralTransitions = useSpiralTransitions;
         propertyChangeSupport.firePropertyChange(PROP_USE_SPIRAL_TRANSITIONS, old, useSpiralTransitions);
+    }
+
+    public boolean isContinuousRampCurvature() {
+        return continuousRampCurvature;
+    }
+
+    public void setContinuousRampCurvature(boolean continuousRampCurvature) {
+        boolean old = this.continuousRampCurvature;
+        if (old == continuousRampCurvature) {
+            return;
+        }
+        this.continuousRampCurvature = continuousRampCurvature;
+        propertyChangeSupport.firePropertyChange(PROP_CONTINUOUS_RAMP_CURVATURE, old, continuousRampCurvature);
     }
 
     public boolean isAutoOptimizeTwoTieRamp() {

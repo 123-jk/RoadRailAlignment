@@ -49,6 +49,13 @@
       "es": "Alineación carretera/ferrocarril - ventana independiente"
     },
     {
+      "source": "Basic smart alignment",
+      "zh_CN": "智能基础线形",
+      "fr": "Alignement intelligent de base",
+      "de": "Intelligente Basistrassierung",
+      "es": "Alineacion basica inteligente"
+    },
+    {
       "source": "Two-point straight line",
       "zh_CN": "两点直线",
       "fr": "Droite à deux points",
@@ -187,6 +194,13 @@
       "fr": "Travail continu",
       "de": "Fortlaufend arbeiten",
       "es": "Trabajo continuo"
+    },
+    {
+      "source": "Keep ramp curvature for next segment",
+      "zh_CN": "保留匝道曲率给下一段",
+      "fr": "Conserver la courbure de la bretelle pour le segment suivant",
+      "de": "Rampenkrümmung für das nächste Segment beibehalten",
+      "es": "Conservar la curvatura del ramal para el siguiente segmento"
     },
     {
       "source": "Snap to existing nodes",
@@ -350,6 +364,13 @@
       "es": "Ajustado a la dirección de la vía de origen; el siguiente punto se proyectará sobre ella."
     },
     {
+      "source": "Started a new alignment point; the first segment will be straight.",
+      "zh_CN": "已创建新起点；第一段将绘制为直线。",
+      "fr": "Nouveau point de depart cree ; le premier segment sera droit.",
+      "de": "Neuer Startpunkt gesetzt; das erste Segment wird gerade.",
+      "es": "Nuevo punto inicial creado; el primer segmento sera recto."
+    },
+    {
       "source": "Click a tie-in point near one selected existing way first.",
       "zh_CN": "请先在一条选中的既有线附近点击接入点。",
       "fr": "Cliquer d’abord un point de raccordement près du chemin existant sélectionné.",
@@ -425,6 +446,13 @@
       "fr": "Tangente finale du segment précédent réutilisée comme direction de départ du segment suivant.",
       "de": "Endtangente des vorherigen Segments als Startrichtung des nächsten Segments wiederverwendet.",
       "es": "Tangente final del segmento anterior reutilizada como dirección inicial del siguiente segmento."
+    },
+    {
+      "source": "Reused the previous ramp curvature for the next same-direction curve.",
+      "zh_CN": "已为下一段同向曲线复用上一段匝道曲率。",
+      "fr": "Courbure de bretelle precedente reutilisee pour la courbe suivante de meme sens.",
+      "de": "Vorherige Rampenkruemmung fuer die naechste gleichgerichtete Kurve wiederverwendet.",
+      "es": "Se reutilizo la curvatura del ramal anterior para la siguiente curva en el mismo sentido."
     },
     {
       "source": "Kept the curve end point and outgoing tangent for the next straight segment.",

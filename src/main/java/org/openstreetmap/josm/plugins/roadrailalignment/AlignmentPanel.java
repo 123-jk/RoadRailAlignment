@@ -36,6 +36,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
     private JSpinner radiusSpinner;
     private JSpinner spiralLengthSpinner;
     private JCheckBox spiralTransitionCheckBox;
+    private JCheckBox continuousRampCurvatureCheckBox;
     private JCheckBox autoOptimizeTwoTieCheckBox;
     private JCheckBox applyOptimizedTwoTieParametersCheckBox;
     private JCheckBox continuousCheckBox;
@@ -146,6 +147,13 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         spiralTransitionCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setUseSpiralTransitions(spiralTransitionCheckBox.isSelected());
+            }
+        });
+
+        continuousRampCurvatureCheckBox = new JCheckBox(tr("Keep ramp curvature for next segment"));
+        continuousRampCurvatureCheckBox.addActionListener(event -> {
+            if (!updatingControls) {
+                controller.setContinuousRampCurvature(continuousRampCurvatureCheckBox.isSelected());
             }
         });
 
@@ -281,6 +289,9 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.weightx = 1.0;
         gc.fill = GridBagConstraints.HORIZONTAL;
         add(spiralTransitionCheckBox, gc);
+
+        gc.gridy++;
+        add(continuousRampCurvatureCheckBox, gc);
 
         gc.gridy++;
         add(autoOptimizeTwoTieCheckBox, gc);
@@ -420,6 +431,7 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
                 || AlignmentController.PROP_SPIRAL_LENGTH.equals(property)
                 || AlignmentController.PROP_CONTINUOUS_MODE.equals(property)
                 || AlignmentController.PROP_USE_SPIRAL_TRANSITIONS.equals(property)
+                || AlignmentController.PROP_CONTINUOUS_RAMP_CURVATURE.equals(property)
                 || AlignmentController.PROP_AUTO_OPTIMIZE_TWO_TIE.equals(property)
                 || AlignmentController.PROP_APPLY_OPTIMIZED_TWO_TIE_PARAMETERS.equals(property)
                 || AlignmentController.PROP_SNAP_TO_EXISTING_NODES.equals(property)
@@ -441,6 +453,9 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             radiusSpinner.setValue(controller.getRadiusMeters());
             spiralLengthSpinner.setValue(controller.getSpiralLengthMeters());
             spiralTransitionCheckBox.setSelected(controller.isUseSpiralTransitions());
+            continuousRampCurvatureCheckBox.setSelected(controller.isContinuousRampCurvature());
+            continuousRampCurvatureCheckBox.setEnabled(controller.isContinuousMode()
+                    && controller.isUseSpiralTransitions());
             autoOptimizeTwoTieCheckBox.setSelected(controller.isAutoOptimizeTwoTieRamp());
             applyOptimizedTwoTieParametersCheckBox.setSelected(controller.isApplyOptimizedTwoTieRampParameters());
             applyOptimizedTwoTieParametersCheckBox.setEnabled(controller.isAutoOptimizeTwoTieRamp());
@@ -449,9 +464,11 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             nodeSnapToleranceSpinner.setValue(controller.getNodeSnapToleranceMeters());
             extraLoopTurnsSpinner.setValue(controller.getExtraLoopTurns());
             extraLoopTurnsSpinner.setEnabled(controller.getAlignmentMode() == AlignmentMode.LARGE_SWEEP_ARC
-                    || controller.getAlignmentMode() == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS);
+                    || controller.getAlignmentMode() == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS
+                    || controller.getAlignmentMode() == AlignmentMode.BASIC_ALIGNMENT);
             tieInDirectionComboBox.setSelectedItem(controller.getTieInDirectionMode());
-            tieInDirectionComboBox.setEnabled(controller.getAlignmentMode() == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS);
+            tieInDirectionComboBox.setEnabled(controller.getAlignmentMode() == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS
+                    || controller.getAlignmentMode() == AlignmentMode.BASIC_ALIGNMENT);
             updateControlPointLabel();
             updateStatusLabel();
         } finally {

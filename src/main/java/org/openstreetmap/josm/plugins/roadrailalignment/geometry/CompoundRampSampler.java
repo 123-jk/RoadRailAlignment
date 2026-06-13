@@ -19,8 +19,40 @@ public final class CompoundRampSampler {
             double minRadiusMeters,
             double spiralLengthMeters,
             double intervalMeters) {
-        // 先按普通单端匝道算出基础几何，再视长度决定是否叠加缓和过渡。
-        List<EastNorth> base = RampArcSampler.sample(tieInPoint, target, minRadiusMeters, intervalMeters);
+        return sampleSingleTieRamp(tieInPoint, target, minRadiusMeters, spiralLengthMeters, intervalMeters, false);
+    }
+
+    public static List<EastNorth> sampleSingleTieRamp(
+            TieInPoint tieInPoint,
+            EastNorth target,
+            double minRadiusMeters,
+            double spiralLengthMeters,
+            double intervalMeters,
+            boolean keepTieInDirection) {
+        return sampleSingleTieRamp(
+                tieInPoint,
+                target,
+                minRadiusMeters,
+                spiralLengthMeters,
+                intervalMeters,
+                keepTieInDirection,
+                false);
+    }
+
+    public static List<EastNorth> sampleSingleTieRamp(
+            TieInPoint tieInPoint,
+            EastNorth target,
+            double minRadiusMeters,
+            double spiralLengthMeters,
+            double intervalMeters,
+            boolean keepTieInDirection,
+            boolean keepExitCurvature) {
+        List<EastNorth> base = RampArcSampler.sample(
+                tieInPoint,
+                target,
+                minRadiusMeters,
+                intervalMeters,
+                keepTieInDirection);
         if (spiralLengthMeters <= 0.0 || base.size() < 3) {
             return base;
         }
@@ -28,19 +60,26 @@ public final class CompoundRampSampler {
         EastNorth start = tieInPoint.getPoint();
         Vector2D chord = Vector2D.between(start, target);
         Vector2D originalTangent = tieInPoint.getTangent().normalize();
-        Vector2D tangent = GeometryUtil.orientToward(originalTangent, chord);
+        Vector2D tangent = keepTieInDirection
+                ? originalTangent
+                : GeometryUtil.orientToward(originalTangent, chord);
         double sourceCurvature = signedCurvatureFromTieIn(tieInPoint);
         if (tangent.dot(originalTangent) < 0.0) {
             sourceCurvature = -sourceCurvature;
         }
-        // 源端曲率按目标方向和最小半径做一次裁剪，避免过渡段过猛。
-        double targetCurvature = RampArcSampler.signedCurvatureFromTangent(start, tangent, target);
-        sourceCurvature = departureCompatibleSourceCurvature(sourceCurvature, targetCurvature);
+        double targetCurvature = RampArcSampler.signedCurvatureFromTangent(
+                start,
+                tangent,
+                target,
+                keepTieInDirection);
+        sourceCurvature = departureCompatibleSourceCurvature(sourceCurvature, targetCurvature, keepTieInDirection);
         sourceCurvature = capCurvatureMagnitude(sourceCurvature, maxCurvatureForRadius(minRadiusMeters));
 
         double usableLength = Math.min(spiralLengthMeters, start.distance(target) * 0.35);
         if (usableLength < 1.0 || Math.abs(sourceCurvature - targetCurvature) < 1e-9) {
-            return base;
+            return keepExitCurvature
+                    ? base
+                    : appendExitTransitionToZero(base, targetCurvature, usableLength, intervalMeters);
         }
 
         List<EastNorth> transition = SpiralSampler.sampleTransitionFromState(
@@ -52,18 +91,26 @@ public final class CompoundRampSampler {
                 intervalMeters);
         EastNorth transitionEnd = transition.get(transition.size() - 1);
         List<EastNorth> rest = RampArcSampler.sample(
-                new TieInPoint(transitionEnd, SpiralSampler.tangentAtEnd(tangent, sourceCurvature, targetCurvature, usableLength),
-                        tieInPoint.getSourceWay(), tieInPoint.getSegmentIndex(), 0.0,
+                new TieInPoint(
+                        transitionEnd,
+                        SpiralSampler.tangentAtEnd(tangent, sourceCurvature, targetCurvature, usableLength),
+                        tieInPoint.getSourceWay(),
+                        tieInPoint.getSegmentIndex(),
+                        0.0,
                         tieInPoint.getStationMeters() + usableLength,
                         Math.abs(targetCurvature) > 1e-9 ? Math.abs(1.0 / targetCurvature) : Double.NaN,
                         targetCurvature),
                 target,
                 minRadiusMeters,
-                intervalMeters);
+                intervalMeters,
+                true);
 
+        List<EastNorth> restWithExit = keepExitCurvature
+                ? rest
+                : appendExitTransitionToZero(rest, targetCurvature, usableLength, intervalMeters);
         List<EastNorth> result = new ArrayList<>();
         GeometryUtil.appendWithoutDuplicate(result, transition);
-        GeometryUtil.appendWithoutDuplicate(result, rest);
+        GeometryUtil.appendWithoutDuplicate(result, restWithExit);
         return result;
     }
 
@@ -89,7 +136,6 @@ public final class CompoundRampSampler {
             double spiralLengthMeters,
             TieInDirectionMode directionMode,
             double intervalMeters) {
-        // 双端连接先尝试普通 Hermite，几何不成立时再退回中间直线插入方案。
         List<EastNorth> base;
         try {
             base = HermiteRampSampler.sample(startTieIn, endTieIn, minRadiusMeters, directionMode, intervalMeters);
@@ -108,7 +154,6 @@ public final class CompoundRampSampler {
             throw new IllegalArgumentException(tr("The two tie-in points are too close."));
         }
 
-        // 两端各预留一段缓和长度，中间主体再去补连接形状。
         double transitionLength = Math.min(spiralLengthMeters, length * 0.25);
         if (transitionLength < 1.0 || length <= transitionLength * 2.0) {
             return base;
@@ -159,7 +204,6 @@ public final class CompoundRampSampler {
 
         List<EastNorth> middle;
         try {
-            // 中间段优先保持平滑连接，达不到最小半径时再退回带直线的解。
             middle = HermiteRampSampler.sampleWithTangents(
                     middleStartTie.getPoint(),
                     middleStartTie.getTangent(),
@@ -193,9 +237,211 @@ public final class CompoundRampSampler {
                 : tieInPoint.getEstimatedCurvature();
     }
 
-    private static double departureCompatibleSourceCurvature(double sourceCurvature, double targetCurvature) {
-        if (!Double.isFinite(sourceCurvature) || Math.abs(sourceCurvature) < 1e-9 || Math.abs(targetCurvature) < 1e-9) {
+    private static List<EastNorth> appendExitTransitionToZero(
+            List<EastNorth> points,
+            double startCurvature,
+            double transitionLength,
+            double intervalMeters) {
+        if (points == null || points.size() < 3
+                || !Double.isFinite(startCurvature)
+                || Math.abs(startCurvature) < 1e-9
+                || transitionLength < 1.0) {
+            return points;
+        }
+
+        EastNorth target = points.get(points.size() - 1);
+        Vector2D endTangent = endTangent(points);
+        if (target == null || !target.isValid() || endTangent == null) {
+            return points;
+        }
+
+        double usableLength = Math.min(transitionLength, pathLength(points) * 0.35);
+        if (usableLength < 1.0) {
+            return points;
+        }
+
+        ExitStart exitStart = bestExitStart(points, target, startCurvature, usableLength, intervalMeters);
+        if (exitStart == null) {
+            return points;
+        }
+        List<EastNorth> exitTransition = SpiralSampler.sampleTransitionFromState(
+                exitStart.point,
+                exitStart.tangent,
+                startCurvature,
+                0.0,
+                exitStart.length,
+                intervalMeters);
+
+        List<EastNorth> result = new ArrayList<>();
+        GeometryUtil.appendWithoutDuplicate(result, exitStart.prefix);
+        GeometryUtil.appendWithoutDuplicate(result, exitTransition);
+        EastNorth exitEnd = exitTransition.get(exitTransition.size() - 1);
+        if (exitEnd.distance(target) > 0.001) {
+            appendStraightTail(result, exitEnd, target, intervalMeters);
+        } else {
+            result.add(target);
+        }
+        result.set(result.size() - 1, target);
+        return result;
+    }
+
+    private static void appendStraightTail(
+            List<EastNorth> result,
+            EastNorth start,
+            EastNorth target,
+            double intervalMeters) {
+        double length = start.distance(target);
+        if (length <= 0.001) {
+            return;
+        }
+        int segmentCount = Math.max(2, (int) Math.ceil(length / Math.max(0.25, intervalMeters)));
+        for (int i = 1; i <= segmentCount; i++) {
+            GeometryUtil.appendWithoutDuplicate(result, List.of(interpolate(start, target, (double) i / segmentCount)));
+        }
+    }
+
+    private static ExitStart bestExitStart(
+            List<EastNorth> points,
+            EastNorth target,
+            double startCurvature,
+            double transitionLength,
+            double intervalMeters) {
+        double totalLength = pathLength(points);
+        if (totalLength < 1.0) {
+            return null;
+        }
+
+        ExitStart best = null;
+        double bestScore = Double.POSITIVE_INFINITY;
+        int lengthSampleCount = 12;
+        int distanceSampleCount = 48;
+        double minLength = Math.min(transitionLength, 1.0);
+        for (int lengthIndex = 0; lengthIndex <= lengthSampleCount; lengthIndex++) {
+            double lengthRatio = lengthSampleCount == 0 ? 0.0 : (double) lengthIndex / lengthSampleCount;
+            double candidateLength = transitionLength - (transitionLength - minLength) * lengthRatio;
+            double maxDistance = Math.min(totalLength - 0.001, Math.max(candidateLength, candidateLength * 3.0));
+            double minDistance = Math.min(maxDistance, Math.max(0.001, candidateLength * 0.25));
+            for (int i = 0; i <= distanceSampleCount; i++) {
+                double ratio = distanceSampleCount == 0 ? 0.0 : (double) i / distanceSampleCount;
+                double distance = minDistance + (maxDistance - minDistance) * ratio;
+                ExitStart candidate = exitStartBeforeDistanceFromEnd(points, distance, candidateLength);
+                if (candidate == null) {
+                    continue;
+                }
+                Vector2D exitTangent = SpiralSampler.tangentAtEnd(
+                        candidate.tangent,
+                        startCurvature,
+                        0.0,
+                        candidateLength);
+                List<EastNorth> transition = SpiralSampler.sampleTransitionFromState(
+                        candidate.point,
+                        candidate.tangent,
+                        startCurvature,
+                        0.0,
+                        candidateLength,
+                        intervalMeters);
+                EastNorth exitEnd = transition.get(transition.size() - 1);
+                Vector2D toTarget = Vector2D.between(exitEnd, target);
+                double distanceToTarget = toTarget.length();
+                double lateralError = Math.abs(exitTangent.cross(toTarget));
+                double reversePenalty = Math.max(0.0, -exitTangent.dot(toTarget)) * 20.0;
+                double lengthPenalty = (transitionLength - candidateLength) * 0.02;
+                double score = lateralError + reversePenalty + distanceToTarget * 0.02 + lengthPenalty;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = candidate;
+                }
+            }
+        }
+        return best == null ? exitStartBeforeDistanceFromEnd(points, transitionLength, transitionLength) : best;
+    }
+
+    private static ExitStart exitStartBeforeDistanceFromEnd(
+            List<EastNorth> points,
+            double distanceFromEnd,
+            double transitionLength) {
+        if (points == null || points.size() < 2) {
+            return null;
+        }
+        double remaining = Math.max(0.0, distanceFromEnd);
+        int index = points.size() - 1;
+        EastNorth next = points.get(index);
+        while (index > 0 && remaining > 0.0) {
+            EastNorth previous = points.get(index - 1);
+            double segmentLength = previous.distance(next);
+            if (segmentLength >= remaining && segmentLength > 1e-9) {
+                double keepRatio = (segmentLength - remaining) / segmentLength;
+                List<EastNorth> prefix = new ArrayList<>(points.subList(0, index));
+                EastNorth point = interpolate(previous, next, keepRatio);
+                prefix.add(point);
+                Vector2D tangent = Vector2D.between(previous, next).normalize();
+                return new ExitStart(prefix, point, tangent, transitionLength);
+            }
+            remaining -= segmentLength;
+            index--;
+            next = previous;
+        }
+        List<EastNorth> prefix = new ArrayList<>();
+        prefix.add(points.get(0));
+        Vector2D tangent = firstTangent(points);
+        return tangent == null ? null : new ExitStart(prefix, points.get(0), tangent, transitionLength);
+    }
+
+    private static EastNorth interpolate(EastNorth start, EastNorth end, double t) {
+        double clamped = Math.max(0.0, Math.min(1.0, t));
+        return new EastNorth(
+                start.east() + (end.east() - start.east()) * clamped,
+                start.north() + (end.north() - start.north()) * clamped);
+    }
+
+    private static double pathLength(List<EastNorth> points) {
+        if (points == null || points.size() < 2) {
             return 0.0;
+        }
+        double length = 0.0;
+        for (int i = 1; i < points.size(); i++) {
+            length += points.get(i - 1).distance(points.get(i));
+        }
+        return length;
+    }
+
+    private static Vector2D endTangent(List<EastNorth> points) {
+        if (points == null || points.size() < 2) {
+            return null;
+        }
+        EastNorth end = points.get(points.size() - 1);
+        for (int i = points.size() - 2; i >= 0; i--) {
+            EastNorth previous = points.get(i);
+            if (previous != null && previous.isValid() && previous.distance(end) > 0.001) {
+                return Vector2D.between(previous, end).normalize();
+            }
+        }
+        return null;
+    }
+
+    private static Vector2D firstTangent(List<EastNorth> points) {
+        if (points == null || points.size() < 2) {
+            return null;
+        }
+        EastNorth start = points.get(0);
+        for (int i = 1; i < points.size(); i++) {
+            EastNorth next = points.get(i);
+            if (next != null && next.isValid() && next.distance(start) > 0.001) {
+                return Vector2D.between(start, next).normalize();
+            }
+        }
+        return null;
+    }
+
+    private static double departureCompatibleSourceCurvature(
+            double sourceCurvature,
+            double targetCurvature,
+            boolean allowInflection) {
+        if (!Double.isFinite(sourceCurvature) || Math.abs(sourceCurvature) < 1e-9 || Math.abs(targetCurvature) < 1e-9) {
+            return allowInflection && Double.isFinite(sourceCurvature) ? sourceCurvature : 0.0;
+        }
+        if (allowInflection) {
+            return sourceCurvature;
         }
 
         double sourceSign = Math.signum(sourceCurvature);
@@ -220,5 +466,19 @@ public final class CompoundRampSampler {
 
     private static double maxCurvatureForRadius(double radiusMeters) {
         return 1.0 / Math.max(1.0, radiusMeters);
+    }
+
+    private static final class ExitStart {
+        private final List<EastNorth> prefix;
+        private final EastNorth point;
+        private final Vector2D tangent;
+        private final double length;
+
+        private ExitStart(List<EastNorth> prefix, EastNorth point, Vector2D tangent, double length) {
+            this.prefix = prefix;
+            this.point = point;
+            this.tangent = tangent;
+            this.length = length;
+        }
     }
 }

@@ -25,7 +25,10 @@ public final class GeometrySmokeTest {
         largeSweepArcSupportsMoreThanHalfTurn();
         largeSweepArcSupportsExtraLoop();
         singleTieRampKeepsEndpoints();
+        singleTieRampCanKeepTieInDirectionForUTurn();
         compoundSingleTieRampKeepsEndpoints();
+        compoundSingleTieRampExitTransitionConnectsSmoothly();
+        compoundSingleTieRampCanStartFromStoredCurvature();
         compoundSingleTieRampLeavesTowardTargetSide();
         twoTieRampKeepsEndpoints();
         twoTieRampCanUseReverseSourceDirection();
@@ -43,6 +46,7 @@ public final class GeometrySmokeTest {
         transitionSpiralModeIsHiddenFromMainUi();
         featureTypePresetTagsCanWriteMultipleTags();
         controllerCanToggleOptimizedTwoTieRampParameterBackfill();
+        controllerCanToggleContinuousRampCurvature();
         controllerCanSetExtraLoopTurns();
         controllerCanSetTieInDirectionMode();
         controllerCanRemoveLastControlPoint();
@@ -156,6 +160,17 @@ public final class GeometrySmokeTest {
         assertPoint(points.get(points.size() - 1), target, "single tie ramp end");
     }
 
+    private static void singleTieRampCanKeepTieInDirectionForUTurn() {
+        TieInPoint tieIn = new TieInPoint(new EastNorth(0, 0), new Vector2D(1, 0), null, -1, 0);
+        EastNorth targetBehind = new EastNorth(-100, 50);
+        List<EastNorth> points = RampArcSampler.sample(tieIn, targetBehind, 20, 10, true);
+        assertPoint(points.get(0), tieIn.getPoint(), "single tie u-turn ramp start");
+        assertPoint(points.get(points.size() - 1), targetBehind, "single tie u-turn ramp end");
+        if (points.size() < 2 || points.get(1).east() <= tieIn.getPoint().east()) {
+            throw new AssertionError("continuous ramp should leave along the retained tangent before turning back");
+        }
+    }
+
     private static void compoundSingleTieRampKeepsEndpoints() {
         TieInPoint tieIn = new TieInPoint(new EastNorth(0, 0), new Vector2D(1, 0), null, 0, 0,
                 0, 500, 1.0 / 500.0);
@@ -163,6 +178,48 @@ public final class GeometrySmokeTest {
         List<EastNorth> points = CompoundRampSampler.sampleSingleTieRamp(tieIn, target, 40, 30, 10);
         assertPoint(points.get(0), tieIn.getPoint(), "compound single tie ramp start");
         assertPoint(points.get(points.size() - 1), target, "compound single tie ramp end");
+        if (Math.abs(endSignedCurvature(points)) > 0.002) {
+            throw new AssertionError("compound single tie ramp should ease out close to zero curvature");
+        }
+    }
+
+    private static void compoundSingleTieRampExitTransitionConnectsSmoothly() {
+        TieInPoint tieIn = new TieInPoint(new EastNorth(0, 0), new Vector2D(1, 0), null, 0, 0,
+                0, Double.NaN, 0.0);
+        EastNorth target = new EastNorth(90, 90);
+        List<EastNorth> points = CompoundRampSampler.sampleSingleTieRamp(tieIn, target, 20, 45, 2);
+        assertPoint(points.get(0), tieIn.getPoint(), "compound exit transition start");
+        assertPoint(points.get(points.size() - 1), target, "compound exit transition end");
+        if (maxSegmentLength(points) > 3.0) {
+            throw new AssertionError("exit transition should not jump away from the circular arc");
+        }
+        if (maxHeadingChange(points) > 0.35) {
+            throw new AssertionError("exit transition should connect smoothly to the circular arc");
+        }
+    }
+
+    private static void compoundSingleTieRampCanStartFromStoredCurvature() {
+        EastNorth start = new EastNorth(0, 0);
+        EastNorth target = new EastNorth(120, 120);
+        TieInPoint straightStart = new TieInPoint(start, new Vector2D(1, 0), null, -1, 0,
+                0, Double.NaN, 0.0);
+        TieInPoint curvedStart = new TieInPoint(start, new Vector2D(1, 0), null, -1, 0,
+                0, 120, -1.0 / 120.0);
+
+        List<EastNorth> fromStraight = CompoundRampSampler.sampleSingleTieRamp(
+                straightStart, target, 20, 40, 5, true);
+        List<EastNorth> fromStoredCurvature = CompoundRampSampler.sampleSingleTieRamp(
+                curvedStart, target, 20, 40, 5, true, true);
+
+        if (fromStraight.size() < 3 || fromStoredCurvature.size() < 3) {
+            throw new AssertionError("compound continuous ramp should produce sampled points");
+        }
+        if (fromStoredCurvature.get(1).north() >= fromStraight.get(1).north()) {
+            throw new AssertionError("continuous ramp should reuse stored opposite curvature at the next segment start");
+        }
+        if (Math.abs(endSignedCurvature(fromStoredCurvature)) < 0.002) {
+            throw new AssertionError("continuous ramp should keep exit curvature when requested");
+        }
     }
 
     private static void compoundSingleTieRampLeavesTowardTargetSide() {
@@ -417,6 +474,18 @@ public final class GeometrySmokeTest {
         }
     }
 
+    private static void controllerCanToggleContinuousRampCurvature() {
+        AlignmentController controller = new AlignmentController();
+        controller.setContinuousRampCurvature(true);
+        if (!controller.isContinuousRampCurvature()) {
+            throw new AssertionError("controller should store continuous ramp curvature mode");
+        }
+        controller.setContinuousRampCurvature(false);
+        if (controller.isContinuousRampCurvature()) {
+            throw new AssertionError("controller should disable continuous ramp curvature mode");
+        }
+    }
+
     private static void controllerCanSetExtraLoopTurns() {
         AlignmentController controller = new AlignmentController();
         controller.setExtraLoopTurns(2);
@@ -469,5 +538,51 @@ public final class GeometrySmokeTest {
             length += points.get(i - 1).distance(points.get(i));
         }
         return length;
+    }
+
+    private static double maxSegmentLength(List<EastNorth> points) {
+        double max = 0.0;
+        for (int i = 1; i < points.size(); i++) {
+            max = Math.max(max, points.get(i - 1).distance(points.get(i)));
+        }
+        return max;
+    }
+
+    private static double maxHeadingChange(List<EastNorth> points) {
+        double max = 0.0;
+        Vector2D previous = null;
+        for (int i = 1; i < points.size(); i++) {
+            EastNorth first = points.get(i - 1);
+            EastNorth second = points.get(i);
+            if (first.distance(second) <= 0.001) {
+                continue;
+            }
+            Vector2D current = Vector2D.between(first, second).normalize();
+            if (previous != null) {
+                double cross = previous.cross(current);
+                double dot = previous.dot(current);
+                max = Math.max(max, Math.abs(Math.atan2(cross, dot)));
+            }
+            previous = current;
+        }
+        return max;
+    }
+
+    private static double endSignedCurvature(List<EastNorth> points) {
+        if (points == null || points.size() < 3) {
+            return 0.0;
+        }
+        EastNorth first = points.get(points.size() - 3);
+        EastNorth second = points.get(points.size() - 2);
+        EastNorth third = points.get(points.size() - 1);
+        double radius = CurvatureEstimator.radiusFromThreePoints(first, second, third);
+        if (!Double.isFinite(radius) || radius <= 0.0) {
+            return 0.0;
+        }
+        double cross = Vector2D.between(first, second).cross(Vector2D.between(second, third));
+        if (Math.abs(cross) < 1e-9) {
+            return 0.0;
+        }
+        return Math.copySign(1.0 / radius, cross);
     }
 }

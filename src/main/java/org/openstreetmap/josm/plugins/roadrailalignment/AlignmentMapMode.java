@@ -21,6 +21,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.plugins.roadrailalignment.geometry.CompoundRampSampler;
+import org.openstreetmap.josm.plugins.roadrailalignment.geometry.CurvatureEstimator;
 import org.openstreetmap.josm.plugins.roadrailalignment.geometry.HermiteRampSampler;
 import org.openstreetmap.josm.plugins.roadrailalignment.geometry.LargeSweepArcSampler;
 import org.openstreetmap.josm.plugins.roadrailalignment.geometry.LineSampler;
@@ -45,11 +46,19 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     private final PreviewPainter previewPainter = new PreviewPainter();
     private TieInPoint pendingStartTieIn;
     private TieInPoint pendingEndTieIn;
+    private boolean pendingNewPointStart;
+    private boolean currentSegmentKeepsExitCurvature;
     private EastNorth continuousAnchorPoint;
     private Vector2D continuousExtensionTangent;
+    private double continuousRampCurvature;
+    private GeneratedSegment previousGeneratedSegment;
+    private GeneratedSegment pendingPromotedPreviousSegment;
+    private List<EastNorth> lastSingleTieNoExitPoints;
+    private double lastSingleTieExitCurvature;
     private boolean bidirectionalExtensionSnap;
     private boolean controllerListenerRegistered;
     private String lastGeneratedDetail = "";
+
     private final MouseAdapter mouseHandler = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
@@ -61,6 +70,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             handleMouseMoved(event);
         }
     };
+
     private final KeyAdapter keyHandler = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent event) {
@@ -156,7 +166,10 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
             List<EastNorth> controlPoints = controller.snapshotControlPoints();
             lastGeneratedDetail = "";
+            maybePromotePreviousSegment(controlPoints);
+            clearLastSingleTieSample();
             List<EastNorth> sampledPoints = sample(controlPoints);
+            applyPendingPreviousSegmentPromotion();
             Way way = JosmWayBuilder.createWay(
                     sampledPoints,
                     controller.getFeatureType(),
@@ -166,10 +179,11 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             controller.setStatusMessage(lastGeneratedDetail == null || lastGeneratedDetail.isEmpty()
                     ? tr("Generated alignment with {0} nodes.", way.getNodesCount())
                     : tr("Generated alignment with {0} nodes. {1}", way.getNodesCount(), lastGeneratedDetail));
-            keepEndPointForContinuousWork(sampledPoints);
+            keepEndPointForContinuousWork(way, controlPoints, sampledPoints);
             previewPainter.clear();
             mapView.repaint();
         } catch (IllegalArgumentException exception) {
+            pendingPromotedPreviousSegment = null;
             showWarning(exception.getMessage());
             controller.setStatusMessage(exception.getMessage());
             controller.clearControlPoints();
@@ -184,10 +198,14 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         double toleranceMeters = snapToleranceMeters(mapView);
         AlignmentMode mode = controller.getAlignmentMode();
 
+        if (mode == AlignmentMode.BASIC_ALIGNMENT) {
+            addPointForBasicMode(point, mapView, toleranceMeters);
+            return;
+        }
+
         if (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY && controller.getControlPointCount() == 0) {
             pendingStartTieIn = ExistingWayAnalyzer.tieInFromNearestWay(point, toleranceMeters, null);
             controller.addControlPoint(pendingStartTieIn.getPoint());
-            // 端头接出时复用连续作业的切线吸附，让第二点可投影到既有线延长线上。
             enableEndpointExtensionSnap(pendingStartTieIn);
             controller.setStatusMessage(ExistingWayAnalyzer.describeTieIn(pendingStartTieIn));
             return;
@@ -218,6 +236,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 controller.addControlPoint(sourceTieIn.getPoint());
                 continuousAnchorPoint = sourceTieIn.getPoint();
                 continuousExtensionTangent = sourceTieIn.getTangent().normalize();
+                continuousRampCurvature = 0.0;
                 bidirectionalExtensionSnap = true;
                 controller.setStatusMessage(tr("Snapped to the source way direction; the next point will be projected along it."));
                 return;
@@ -228,8 +247,46 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         controller.addControlPoint(snappedPoint);
     }
 
+    private void addPointForBasicMode(EastNorth point, MapView mapView, double toleranceMeters) {
+        int count = controller.getControlPointCount();
+        if (count == 0) {
+            TieInPoint tieIn = sourceDirectionTieIn(point, toleranceMeters);
+            if (tieIn != null) {
+                pendingStartTieIn = tieIn;
+                pendingNewPointStart = false;
+                controller.addControlPoint(tieIn.getPoint());
+                enableEndpointExtensionSnap(tieIn);
+                controller.setStatusMessage(ExistingWayAnalyzer.describeTieIn(tieIn));
+                return;
+            }
+
+            EastNorth start = snapControlPoint(point, mapView);
+            pendingNewPointStart = true;
+            pendingStartTieIn = null;
+            controller.addControlPoint(start);
+            continuousAnchorPoint = start;
+            continuousExtensionTangent = null;
+            continuousRampCurvature = 0.0;
+            bidirectionalExtensionSnap = false;
+            controller.setStatusMessage(tr("Started a new alignment point; the first segment will be straight."));
+            return;
+        }
+
+        if (count == 1 && pendingStartTieIn != null && !pendingNewPointStart) {
+            pendingEndTieIn = sourceDirectionTieInExcluding(point, toleranceMeters, pendingStartTieIn.getSourceWay());
+            if (pendingEndTieIn != null) {
+                controller.addControlPoint(pendingEndTieIn.getPoint());
+                ExistingWayAnalyzer.selectTieInWays(pendingStartTieIn, pendingEndTieIn);
+                controller.setStatusMessage(ExistingWayAnalyzer.describeTieIn(pendingEndTieIn));
+                return;
+            }
+        }
+
+        EastNorth snappedPoint = snapControlPoint(point, mapView);
+        controller.addControlPoint(snappedPoint);
+    }
+
     private void enableEndpointExtensionSnap(TieInPoint tieInPoint) {
-        // 只有接入点确实落在既有 Way 首/末端时，才启用端头直线吸附。
         Vector2D tangent = ExistingWayAnalyzer.endpointExtensionTangent(tieInPoint);
         if (tangent == null) {
             clearContinuousExtension();
@@ -237,7 +294,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         }
         continuousAnchorPoint = tieInPoint.getPoint();
         continuousExtensionTangent = tangent.normalize();
-        // 单端匝道端头接出只吸附到端头外侧，避免目标点被吸回原 Way 内部。
+        continuousRampCurvature = 0.0;
         bidirectionalExtensionSnap = false;
     }
 
@@ -248,8 +305,12 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private TieInPoint sourceDirectionTieIn(EastNorth point, double toleranceMeters) {
+        return sourceDirectionTieInExcluding(point, toleranceMeters, null);
+    }
+
+    private TieInPoint sourceDirectionTieInExcluding(EastNorth point, double toleranceMeters, Way excludedWay) {
         try {
-            return ExistingWayAnalyzer.tieInFromNearestWay(point, toleranceMeters, null);
+            return ExistingWayAnalyzer.tieInFromNearestWay(point, toleranceMeters, excludedWay);
         } catch (IllegalArgumentException exception) {
             return null;
         }
@@ -297,7 +358,11 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         }
 
         AlignmentMode mode = controller.getAlignmentMode();
-        // 预览阶段和正式生成使用同一套模式分发，避免鼠标预览与最终结果不一致。
+        if (mode == AlignmentMode.BASIC_ALIGNMENT && controls.size() == 1) {
+            EastNorth basicTarget = pendingNewPointStart ? snapControlPoint(cursor, mapView) : cursor;
+            return sampleBasicSegment(controls.get(0), basicTarget);
+        }
+
         if ((mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS)
                 && pendingStartTieIn != null
                 && controls.size() == 1) {
@@ -329,7 +394,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
     private List<EastNorth> sample(List<EastNorth> points) {
         AlignmentMode mode = controller.getAlignmentMode();
-        // 正式生成阶段按模式选择对应采样器，匝道类模式还会带上回退逻辑。
+        if (mode == AlignmentMode.BASIC_ALIGNMENT) {
+            return sampleBasicSegment(points.get(0), points.get(1));
+        }
         if (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY) {
             if (pendingStartTieIn == null) {
                 throw new IllegalArgumentException(tr("Click a tie-in point near one selected existing way first."));
@@ -360,6 +427,18 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 points.get(0),
                 points.get(1),
                 controller.getSampleIntervalMeters());
+    }
+
+    private List<EastNorth> sampleBasicSegment(EastNorth start, EastNorth target) {
+        if (pendingNewPointStart || pendingStartTieIn == null) {
+            clearLastSingleTieSample();
+            return LineSampler.sample(start, target, controller.getSampleIntervalMeters());
+        }
+        if (pendingEndTieIn != null) {
+            clearLastSingleTieSample();
+            return sampleTwoTieRamp();
+        }
+        return sampleSingleTieRamp(target);
     }
 
     private List<EastNorth> samplePiCurve(EastNorth start, EastNorth pi, EastNorth end) {
@@ -395,24 +474,141 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private List<EastNorth> sampleSingleTieRamp(EastNorth target) {
+        boolean keepTieInDirection = isContinuousRampStart();
+        TieInPoint startTieIn = effectiveSingleTieRampStart(keepTieInDirection);
         if (controller.isUseSpiralTransitions() && controller.getSpiralLengthMeters() > 0.0) {
-            return CompoundRampSampler.sampleSingleTieRamp(
-                    pendingStartTieIn,
+            lastSingleTieNoExitPoints = CompoundRampSampler.sampleSingleTieRamp(
+                    startTieIn,
                     target,
                     controller.getRadiusMeters(),
                     controller.getSpiralLengthMeters(),
-                    controller.getSampleIntervalMeters());
+                    controller.getSampleIntervalMeters(),
+                    keepTieInDirection,
+                    true);
+            lastSingleTieExitCurvature = endSignedCurvature(lastSingleTieNoExitPoints);
+            return CompoundRampSampler.sampleSingleTieRamp(
+                    startTieIn,
+                    target,
+                    controller.getRadiusMeters(),
+                    controller.getSpiralLengthMeters(),
+                    controller.getSampleIntervalMeters(),
+                    keepTieInDirection,
+                    currentSegmentKeepsExitCurvature);
         }
+        lastSingleTieNoExitPoints = null;
+        lastSingleTieExitCurvature = 0.0;
         return RampArcSampler.sample(
-                pendingStartTieIn,
+                startTieIn,
                 target,
                 controller.getRadiusMeters(),
-                controller.getSampleIntervalMeters());
+                controller.getSampleIntervalMeters(),
+                keepTieInDirection);
+    }
+
+    private TieInPoint effectiveSingleTieRampStart(boolean continuousRampStart) {
+        if (!continuousRampStart || controller.isContinuousRampCurvature()) {
+            return pendingStartTieIn;
+        }
+        return new TieInPoint(
+                pendingStartTieIn.getPoint(),
+                pendingStartTieIn.getTangent(),
+                pendingStartTieIn.getSourceWay(),
+                pendingStartTieIn.getSegmentIndex(),
+                pendingStartTieIn.getDistanceToClickMeters(),
+                pendingStartTieIn.getStationMeters(),
+                Double.NaN,
+                0.0);
+    }
+
+    private boolean isContinuousRampStart() {
+        return (controller.getAlignmentMode() == AlignmentMode.RAMP_FROM_SELECTED_WAY
+                || controller.getAlignmentMode() == AlignmentMode.BASIC_ALIGNMENT)
+                && pendingStartTieIn != null
+                && pendingStartTieIn.getSourceWay() == null
+                && pendingStartTieIn.getSegmentIndex() < 0;
+    }
+
+    private void maybePromotePreviousSegment(List<EastNorth> controlPoints) {
+        currentSegmentKeepsExitCurvature = false;
+        if (!controller.isContinuousRampCurvature()
+                || previousGeneratedSegment == null
+                || previousGeneratedSegment.noExitPoints == null
+                || previousGeneratedSegment.noExitPoints.size() < 2
+                || !isContinuousRampStart()
+                || controlPoints == null
+                || controlPoints.size() < 2) {
+            return;
+        }
+
+        Vector2D promotedTangent = endTangent(previousGeneratedSegment.noExitPoints);
+        if (promotedTangent == null) {
+            return;
+        }
+
+        double currentTargetCurvature = estimateCurrentSingleTieCurvature(controlPoints.get(1), promotedTangent);
+        if (Math.signum(previousGeneratedSegment.exitCurvature) == 0.0
+                || Math.signum(currentTargetCurvature) == 0.0
+                || Math.signum(previousGeneratedSegment.exitCurvature) != Math.signum(currentTargetCurvature)) {
+            return;
+        }
+
+        continuousRampCurvature = previousGeneratedSegment.exitCurvature;
+        if (pendingStartTieIn != null) {
+            pendingStartTieIn = new TieInPoint(
+                    pendingStartTieIn.getPoint(),
+                    promotedTangent,
+                    pendingStartTieIn.getSourceWay(),
+                    pendingStartTieIn.getSegmentIndex(),
+                    pendingStartTieIn.getDistanceToClickMeters(),
+                    pendingStartTieIn.getStationMeters(),
+                    radiusFromCurvature(continuousRampCurvature),
+                    continuousRampCurvature);
+        }
+        continuousExtensionTangent = promotedTangent;
+        currentSegmentKeepsExitCurvature = false;
+        pendingPromotedPreviousSegment = previousGeneratedSegment;
+        previousGeneratedSegment = null;
+        lastGeneratedDetail = tr("Reused the previous ramp curvature for the next same-direction curve.");
+        controller.setStatusMessage(tr("Reused the previous ramp curvature for the next same-direction curve."));
+    }
+
+    private void applyPendingPreviousSegmentPromotion() {
+        if (pendingPromotedPreviousSegment == null) {
+            return;
+        }
+        GeneratedSegment segment = pendingPromotedPreviousSegment;
+        pendingPromotedPreviousSegment = null;
+        JosmWayBuilder.replaceWayNodes(
+                segment.way,
+                segment.noExitPoints,
+                controller.isSnapToExistingNodes(),
+                controller.getNodeSnapToleranceMeters(),
+                segment.controlPoints);
+    }
+
+    private double estimateCurrentSingleTieCurvature(EastNorth target) {
+        return estimateCurrentSingleTieCurvature(
+                target,
+                pendingStartTieIn == null ? null : pendingStartTieIn.getTangent());
+    }
+
+    private double estimateCurrentSingleTieCurvature(EastNorth target, Vector2D tangent) {
+        if (pendingStartTieIn == null || target == null || !target.isValid()) {
+            return 0.0;
+        }
+        try {
+            return RampArcSampler.signedCurvatureFromTangent(
+                    pendingStartTieIn.getPoint(),
+                    tangent,
+                    target,
+                    true);
+        } catch (IllegalArgumentException exception) {
+            return 0.0;
+        }
     }
 
     private List<EastNorth> sampleTwoTieRamp() {
         if (controller.isAutoOptimizeTwoTieRamp()) {
-            // 自动优化优先给出较稳的半径和缓和段长度，减少手工反复试参。
             OptimizedTwoTieRampSampler.Result result = OptimizedTwoTieRampSampler.sample(
                     pendingStartTieIn,
                     pendingEndTieIn,
@@ -441,7 +637,6 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     controller.getSampleIntervalMeters());
         }
         try {
-            // 普通两端连接先尝试 Hermite；几何不成立时再退回中间直线插入。
             return HermiteRampSampler.sample(
                     pendingStartTieIn,
                     pendingEndTieIn,
@@ -496,7 +691,6 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private EastNorth snapControlPoint(EastNorth point, MapView mapView) {
-        // 吸附顺序：强制切线投影优先，其次既有节点，最后才尝试连续延长线。
         if (shouldForcePiPointToPreviousTangent()) {
             return projectToContinuousExtension(point);
         }
@@ -520,7 +714,6 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private EastNorth sourceDirectionSnappedPoint(EastNorth point, MapView mapView) {
-        // 只有鼠标位置足够靠近保留切线时，才把点钉到这条延长线上。
         EastNorth projected = projectToContinuousExtension(point);
         double distanceAlong = Vector2D.between(continuousAnchorPoint, projected).dot(continuousExtensionTangent);
         if (distanceAlong == 0.0 && projected.distance(continuousAnchorPoint) > 0.001) {
@@ -536,11 +729,22 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     private void clearPendingState() {
         pendingStartTieIn = null;
         pendingEndTieIn = null;
+        pendingNewPointStart = false;
+        currentSegmentKeepsExitCurvature = false;
+        clearLastSingleTieSample();
+    }
+
+    private void clearLastSingleTieSample() {
+        lastSingleTieNoExitPoints = null;
+        lastSingleTieExitCurvature = 0.0;
     }
 
     private void clearContinuousExtension() {
         continuousAnchorPoint = null;
         continuousExtensionTangent = null;
+        continuousRampCurvature = 0.0;
+        previousGeneratedSegment = null;
+        pendingPromotedPreviousSegment = null;
         bidirectionalExtensionSnap = false;
     }
 
@@ -594,6 +798,10 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
         if (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY && currentCount == 0) {
             pendingStartTieIn = null;
+        } else if (mode == AlignmentMode.BASIC_ALIGNMENT) {
+            if (previousControlPointCount >= 2 && currentCount < 2) {
+                pendingEndTieIn = null;
+            }
         } else if (mode == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS) {
             if (previousControlPointCount >= 2 && currentCount < 2) {
                 pendingEndTieIn = null;
@@ -615,7 +823,6 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
         EastNorth projected = projectToContinuousExtension(point);
         double distanceAlong = Vector2D.between(continuousAnchorPoint, projected).dot(continuousExtensionTangent);
-        // 非双向吸附用于端头延长线和连续作业，只允许沿保留切线正向延伸。
         if (!bidirectionalExtensionSnap && distanceAlong <= 0.0) {
             return point;
         }
@@ -647,11 +854,11 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
     private boolean isContinuousExtensionSnapActive() {
         AlignmentMode mode = controller.getAlignmentMode();
-        // 直线/圆曲线连续作业和单端匝道端头接出共用同一套延长线吸附状态。
         if (!(mode == AlignmentMode.STRAIGHT_LINE
                 || mode == AlignmentMode.PI_CIRCULAR_ARC
                 || mode == AlignmentMode.LARGE_SWEEP_ARC
-                || mode == AlignmentMode.RAMP_FROM_SELECTED_WAY)
+                || mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
+                || mode == AlignmentMode.BASIC_ALIGNMENT)
                 || controller.getControlPointCount() != 1
                 || continuousAnchorPoint == null
                 || continuousExtensionTangent == null) {
@@ -670,14 +877,26 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         previewPainter.clear();
 
         AlignmentMode mode = controller.getAlignmentMode();
-        // 切换到可连续作业的模式时，保留上一段终点和切线，方便接着画下一段。
         if (controller.isContinuousMode()
                 && continuousAnchorPoint != null
                 && continuousExtensionTangent != null
                 && (mode == AlignmentMode.STRAIGHT_LINE
                 || mode == AlignmentMode.PI_CIRCULAR_ARC
-                || mode == AlignmentMode.LARGE_SWEEP_ARC)) {
+                || mode == AlignmentMode.LARGE_SWEEP_ARC
+                || mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
+                || mode == AlignmentMode.BASIC_ALIGNMENT)) {
             controller.keepOnlyControlPoint(continuousAnchorPoint);
+            if (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.BASIC_ALIGNMENT) {
+                pendingStartTieIn = new TieInPoint(
+                        continuousAnchorPoint,
+                        continuousExtensionTangent,
+                        null,
+                        -1,
+                        0.0,
+                        0.0,
+                        radiusFromCurvature(retainedRampCurvature()),
+                        retainedRampCurvature());
+            }
             controller.setStatusMessage(tr("Reused the previous segment end tangent as the next segment start direction."));
             MapView mapView = MainApplication.getMap() == null ? null : MainApplication.getMap().mapView;
             if (mapView != null) {
@@ -685,37 +904,56 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             }
         } else if (mode != AlignmentMode.STRAIGHT_LINE
                 && mode != AlignmentMode.PI_CIRCULAR_ARC
-                && mode != AlignmentMode.LARGE_SWEEP_ARC) {
+                && mode != AlignmentMode.LARGE_SWEEP_ARC
+                && mode != AlignmentMode.RAMP_FROM_SELECTED_WAY
+                && mode != AlignmentMode.BASIC_ALIGNMENT) {
             clearContinuousExtension();
         }
     }
 
-    private void keepEndPointForContinuousWork(List<EastNorth> sampledPoints) {
+    private void keepEndPointForContinuousWork(Way way, List<EastNorth> controlPoints, List<EastNorth> sampledPoints) {
         List<EastNorth> points = controller.snapshotControlPoints();
         AlignmentMode mode = controller.getAlignmentMode();
-        // 生成后是否保留终点，取决于当前模式是否还能把终点当作下一段起点。
+        boolean wasNewPointStart = pendingNewPointStart;
+        boolean keepCurrentExitCurvature = currentSegmentKeepsExitCurvature;
+        List<EastNorth> rememberedNoExitPoints = lastSingleTieNoExitPoints == null
+                ? null
+                : new ArrayList<>(lastSingleTieNoExitPoints);
+        double rememberedExitCurvature = lastSingleTieExitCurvature;
         boolean canKeepEndPoint = controller.isContinuousMode()
                 && (mode == AlignmentMode.STRAIGHT_LINE
                 || mode == AlignmentMode.PI_CIRCULAR_ARC
                 || mode == AlignmentMode.LARGE_SWEEP_ARC
-                || mode == AlignmentMode.TRANSITION_SPIRAL)
+                || mode == AlignmentMode.TRANSITION_SPIRAL
+                || mode == AlignmentMode.BASIC_ALIGNMENT)
                 && !points.isEmpty();
 
         clearPendingState();
         if (controller.isContinuousMode()
-                && mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
+                && (mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.BASIC_ALIGNMENT)
+                && !wasNewPointStart
                 && sampledPoints != null
                 && !sampledPoints.isEmpty()) {
-            // 单端匝道保留几何终点，并把出口切线作为下一段的直线接续方向。
             EastNorth endPoint = sampledPoints.get(sampledPoints.size() - 1);
             Vector2D tangent = endTangent(sampledPoints);
+            double curvature = keepCurrentExitCurvature ? endSignedCurvature(sampledPoints) : 0.0;
             controller.keepOnlyControlPoint(endPoint);
             continuousAnchorPoint = endPoint;
             continuousExtensionTangent = tangent;
+            continuousRampCurvature = curvature;
             bidirectionalExtensionSnap = false;
             if (tangent != null) {
-                pendingStartTieIn = new TieInPoint(endPoint, tangent, null, -1, 0.0, 0.0, Double.NaN, 0.0);
+                pendingStartTieIn = new TieInPoint(
+                        endPoint,
+                        tangent,
+                        null,
+                        -1,
+                        0.0,
+                        0.0,
+                        radiusFromCurvature(curvature),
+                        curvature);
             }
+            rememberGeneratedSegment(way, controlPoints, rememberedNoExitPoints, rememberedExitCurvature);
             controller.setStatusMessage(tr("Kept the ramp end point and tangent as the next ramp start."));
             return;
         }
@@ -725,13 +963,28 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             controller.keepOnlyControlPoint(endPoint);
             if (mode == AlignmentMode.STRAIGHT_LINE
                     || mode == AlignmentMode.PI_CIRCULAR_ARC
-                    || mode == AlignmentMode.LARGE_SWEEP_ARC) {
+                    || mode == AlignmentMode.LARGE_SWEEP_ARC
+                    || mode == AlignmentMode.BASIC_ALIGNMENT) {
                 continuousAnchorPoint = endPoint;
                 continuousExtensionTangent = endTangent(sampledPoints);
+                continuousRampCurvature = 0.0;
                 bidirectionalExtensionSnap = false;
+                if (mode == AlignmentMode.BASIC_ALIGNMENT && continuousExtensionTangent != null) {
+                    pendingStartTieIn = new TieInPoint(
+                            endPoint,
+                            continuousExtensionTangent,
+                            null,
+                            -1,
+                            0.0,
+                            0.0,
+                            Double.NaN,
+                            0.0);
+                    pendingNewPointStart = false;
+                }
             } else {
                 clearContinuousExtension();
             }
+            previousGeneratedSegment = null;
             if (mode == AlignmentMode.PI_CIRCULAR_ARC || mode == AlignmentMode.LARGE_SWEEP_ARC) {
                 controller.setStatusMessage(tr("Kept the curve end point and outgoing tangent for the next straight segment."));
             } else {
@@ -740,7 +993,10 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         } else {
             controller.clearControlPoints();
             clearContinuousExtension();
+            previousGeneratedSegment = null;
         }
+        pendingNewPointStart = false;
+        currentSegmentKeepsExitCurvature = false;
     }
 
     private EastNorth continuousRetainedPoint(
@@ -753,6 +1009,26 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             return sampledPoints.get(sampledPoints.size() - 1);
         }
         return controlPoints.get(controlPoints.size() - 1);
+    }
+
+    private void rememberGeneratedSegment(
+            Way way,
+            List<EastNorth> controlPoints,
+            List<EastNorth> noExitPoints,
+            double exitCurvature) {
+        if (!controller.isContinuousRampCurvature()
+                || way == null
+                || noExitPoints == null
+                || noExitPoints.size() < 2
+                || Math.abs(exitCurvature) < 1e-9) {
+            previousGeneratedSegment = null;
+            return;
+        }
+        previousGeneratedSegment = new GeneratedSegment(
+                way,
+                new ArrayList<>(controlPoints),
+                new ArrayList<>(noExitPoints),
+                exitCurvature);
     }
 
     private Vector2D endTangent(List<EastNorth> sampledPoints) {
@@ -769,11 +1045,75 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         return null;
     }
 
+    private double endSignedCurvature(List<EastNorth> sampledPoints) {
+        if (sampledPoints == null || sampledPoints.size() < 3) {
+            return 0.0;
+        }
+
+        int endIndex = sampledPoints.size() - 1;
+        EastNorth end = sampledPoints.get(endIndex);
+        int middleIndex = previousDistinctPointIndex(sampledPoints, endIndex, end);
+        if (middleIndex < 0) {
+            return 0.0;
+        }
+        EastNorth middle = sampledPoints.get(middleIndex);
+        int startIndex = previousDistinctPointIndex(sampledPoints, middleIndex, middle);
+        if (startIndex < 0) {
+            return 0.0;
+        }
+        EastNorth start = sampledPoints.get(startIndex);
+        double radius = CurvatureEstimator.radiusFromThreePoints(start, middle, end);
+        if (!Double.isFinite(radius) || radius <= 0.0) {
+            return 0.0;
+        }
+        double cross = Vector2D.between(start, middle).cross(Vector2D.between(middle, end));
+        if (Math.abs(cross) < 1e-9) {
+            return 0.0;
+        }
+        return Math.copySign(1.0 / radius, cross);
+    }
+
+    private int previousDistinctPointIndex(List<EastNorth> points, int beforeIndex, EastNorth reference) {
+        for (int i = beforeIndex - 1; i >= 0; i--) {
+            EastNorth point = points.get(i);
+            if (point != null && point.isValid() && point.distance(reference) > 0.001) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private double retainedRampCurvature() {
+        return controller.isContinuousRampCurvature() ? continuousRampCurvature : 0.0;
+    }
+
+    private double radiusFromCurvature(double curvature) {
+        return Math.abs(curvature) > 1e-9 ? Math.abs(1.0 / curvature) : Double.NaN;
+    }
+
     private void showWarning(String message) {
         JOptionPane.showMessageDialog(
                 MainApplication.getMainFrame(),
                 message,
                 tr("Road/Rail Alignment"),
                 JOptionPane.WARNING_MESSAGE);
+    }
+
+    private static final class GeneratedSegment {
+        private final Way way;
+        private final List<EastNorth> controlPoints;
+        private final List<EastNorth> noExitPoints;
+        private final double exitCurvature;
+
+        private GeneratedSegment(
+                Way way,
+                List<EastNorth> controlPoints,
+                List<EastNorth> noExitPoints,
+                double exitCurvature) {
+            this.way = way;
+            this.controlPoints = controlPoints;
+            this.noExitPoints = noExitPoints;
+            this.exitCurvature = exitCurvature;
+        }
     }
 }

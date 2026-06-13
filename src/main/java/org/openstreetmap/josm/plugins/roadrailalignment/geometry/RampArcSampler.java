@@ -19,6 +19,15 @@ public final class RampArcSampler {
             EastNorth target,
             double minRadiusMeters,
             double intervalMeters) {
+        return sample(tieInPoint, target, minRadiusMeters, intervalMeters, false);
+    }
+
+    public static List<EastNorth> sample(
+            TieInPoint tieInPoint,
+            EastNorth target,
+            double minRadiusMeters,
+            double intervalMeters,
+            boolean keepTieInDirection) {
         if (tieInPoint == null || tieInPoint.getPoint() == null || target == null || !target.isValid()) {
             throw new IllegalArgumentException(tr("Invalid ramp tie-in point or target point."));
         }
@@ -31,22 +40,19 @@ public final class RampArcSampler {
         }
 
         Vector2D tangent = tieInPoint.getTangent().normalize();
-        // 目标在切线背面时先翻转切线，保证匝道总是朝向点击方向外侧展开。
-        if (offset.dot(tangent) < 0.0) {
+        if (!keepTieInDirection && offset.dot(tangent) < 0.0) {
             tangent = tangent.reverse();
         }
 
         Vector2D leftNormal = tangent.leftNormal();
         double signedDenominator = 2.0 * offset.dot(leftNormal);
         if (Math.abs(signedDenominator) < EPS) {
-            // 目标几乎落在切线上时直接退回直线，避免算出接近无穷大的半径。
             if (offset.dot(tangent) <= 0.0) {
                 throw new IllegalArgumentException(tr("The target point is opposite the tie-in tangent direction."));
             }
             return LineSampler.sample(start, target, intervalMeters);
         }
 
-        // 半径符号决定左转还是右转，绝对值用于实际曲率大小。
         double signedRadius = offset.lengthSquared() / signedDenominator;
         double radius = Math.abs(signedRadius);
         double requiredMinRadius = Math.max(1.0, minRadiusMeters);
@@ -63,6 +69,14 @@ public final class RampArcSampler {
     }
 
     public static double signedCurvatureFromTangent(EastNorth start, Vector2D tangent, EastNorth target) {
+        return signedCurvatureFromTangent(start, tangent, target, false);
+    }
+
+    public static double signedCurvatureFromTangent(
+            EastNorth start,
+            Vector2D tangent,
+            EastNorth target,
+            boolean keepTangentDirection) {
         if (start == null || tangent == null || target == null || !start.isValid() || !target.isValid()) {
             throw new IllegalArgumentException(tr("Invalid ramp tie-in point or target point."));
         }
@@ -72,8 +86,9 @@ public final class RampArcSampler {
             throw new IllegalArgumentException(tr("The ramp target point is too close to the tie-in point."));
         }
 
-        // 先把切线朝向目标，再用左法线判断曲率正负。
-        Vector2D orientedTangent = GeometryUtil.orientToward(tangent, offset);
+        Vector2D orientedTangent = keepTangentDirection
+                ? tangent.normalize()
+                : GeometryUtil.orientToward(tangent, offset);
         double signedDenominator = 2.0 * offset.dot(orientedTangent.leftNormal());
         if (Math.abs(signedDenominator) < EPS) {
             return 0.0;

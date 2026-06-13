@@ -7,12 +7,15 @@ import java.util.Collections;
 import java.util.List;
 
 import org.openstreetmap.josm.command.AddCommand;
+import org.openstreetmap.josm.command.ChangeNodesCommand;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -21,7 +24,6 @@ import org.openstreetmap.josm.plugins.roadrailalignment.FeatureType;
 import org.openstreetmap.josm.tools.Logging;
 
 public final class JosmWayBuilder {
-    private static final String SOURCE_TAG_VALUE = "road_rail_alignment_plugin";
     private static final double EXACT_REUSE_TOLERANCE_METERS = 0.001;
 
     private JosmWayBuilder() {
@@ -70,7 +72,6 @@ public final class JosmWayBuilder {
         Way way = new Way();
         way.setNodes(nodes);
         featureType.getTags().forEach(way::put);
-        way.put("source", SOURCE_TAG_VALUE);
 
         List<Command> commands = new ArrayList<>(newNodes.size() + 1);
         for (Node node : newNodes) {
@@ -85,6 +86,66 @@ public final class JosmWayBuilder {
         MainApplication.getMap().mapView.repaint();
         Logging.info(tr("Road/Rail Alignment: generated a way with {0} nodes.", nodes.size()));
         return way;
+    }
+
+    public static void replaceWayNodes(
+            Way way,
+            List<EastNorth> eastNorthPoints,
+            boolean snapToExistingNodes,
+            double nodeSnapToleranceMeters,
+            List<EastNorth> anchorPoints) {
+        if (way == null || way.getDataSet() == null) {
+            return;
+        }
+        if (eastNorthPoints == null || eastNorthPoints.size() < 2) {
+            throw new IllegalArgumentException(tr("At least two points are required to generate a way."));
+        }
+
+        DataSet dataSet = way.getDataSet();
+        List<Node> oldNodes = new ArrayList<>(way.getNodes());
+        List<Node> nodes = new ArrayList<>(eastNorthPoints.size());
+        List<Node> newNodes = new ArrayList<>(eastNorthPoints.size());
+        for (int i = 0; i < eastNorthPoints.size(); i++) {
+            EastNorth point = eastNorthPoints.get(i);
+            double reuseTolerance = reuseToleranceForPoint(
+                    i,
+                    eastNorthPoints.size(),
+                    point,
+                    snapToExistingNodes,
+                    nodeSnapToleranceMeters,
+                    anchorPoints);
+            Node existingNode = NodeSnapper.findNearestNode(dataSet, point, reuseTolerance).orElse(null);
+            if (existingNode != null) {
+                appendNodeWithoutConsecutiveDuplicate(nodes, existingNode);
+            } else {
+                Node node = new Node(point);
+                if (appendNodeWithoutConsecutiveDuplicate(nodes, node)) {
+                    newNodes.add(node);
+                }
+            }
+        }
+        if (nodes.size() < 2) {
+            throw new IllegalArgumentException(tr("Not enough valid nodes remain after snapping to generate a way."));
+        }
+
+        List<Node> obsoleteNodes = findObsoleteOwnedNodes(way, oldNodes, nodes);
+        List<Command> commands = new ArrayList<>(newNodes.size() + 2);
+        for (Node node : newNodes) {
+            commands.add(new AddCommand(dataSet, node));
+        }
+        commands.add(new ChangeNodesCommand(dataSet, way, nodes));
+        if (!obsoleteNodes.isEmpty()) {
+            commands.add(new DeleteCommand(dataSet, obsoleteNodes));
+        }
+        UndoRedoHandler.getInstance().add(new SequenceCommand(
+                tr("Generate road/rail alignment"),
+                commands));
+        dataSet.setSelected(way);
+        MainApplication.getMap().mapView.repaint();
+        Logging.info(tr(
+                "Road/Rail Alignment: updated a way with {0} nodes and removed {1} obsolete nodes.",
+                nodes.size(),
+                obsoleteNodes.size()));
     }
 
     private static DataSet ensureEditDataSet() {
@@ -147,5 +208,31 @@ public final class JosmWayBuilder {
         }
         nodes.add(node);
         return true;
+    }
+
+    private static List<Node> findObsoleteOwnedNodes(Way way, List<Node> oldNodes, List<Node> replacementNodes) {
+        List<Node> obsoleteNodes = new ArrayList<>();
+        for (Node node : oldNodes) {
+            if (node == null
+                    || replacementNodes.contains(node)
+                    || obsoleteNodes.contains(node)
+                    || node.isDeleted()
+                    || node.isIncomplete()
+                    || node.isTagged()
+                    || hasReferrerOtherThan(node, way)) {
+                continue;
+            }
+            obsoleteNodes.add(node);
+        }
+        return obsoleteNodes;
+    }
+
+    private static boolean hasReferrerOtherThan(Node node, Way way) {
+        for (OsmPrimitive referrer : node.getReferrers()) {
+            if (referrer != way) {
+                return true;
+            }
+        }
+        return false;
     }
 }

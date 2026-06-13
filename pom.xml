@@ -5,7 +5,7 @@
 
     <groupId>org.openstreetmap.josm.plugins</groupId>
     <artifactId>RoadRailAlignment</artifactId>
-    <version>0.1.21</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>RoadRailAlignment</name>

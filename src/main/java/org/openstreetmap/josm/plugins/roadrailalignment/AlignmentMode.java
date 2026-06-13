@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.util.Arrays;
 
 public enum AlignmentMode {
+    BASIC_ALIGNMENT("Basic smart alignment", 2, true),
     STRAIGHT_LINE("Two-point straight line", 2, true),
     PI_CIRCULAR_ARC("Three-point circular curve (with transitions)", 3, true),
     LARGE_SWEEP_ARC("Large-sweep circular curve/loop", 3, true),
