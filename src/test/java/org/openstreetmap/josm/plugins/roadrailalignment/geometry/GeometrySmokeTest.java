@@ -476,6 +476,9 @@ public final class GeometrySmokeTest {
 
     private static void controllerCanToggleContinuousRampCurvature() {
         AlignmentController controller = new AlignmentController();
+        if (controller.isContinuousRampCurvature()) {
+            throw new AssertionError("controller should not keep ramp curvature by default");
+        }
         controller.setContinuousRampCurvature(true);
         if (!controller.isContinuousRampCurvature()) {
             throw new AssertionError("controller should store continuous ramp curvature mode");

@@ -5,7 +5,7 @@
 
     <groupId>org.openstreetmap.josm.plugins</groupId>
     <artifactId>RoadRailAlignment</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <packaging>jar</packaging>
 
     <name>RoadRailAlignment</name>
@@ -45,7 +45,7 @@
                             <fr_Plugin-Description>Dessine les alignements horizontaux de routes, rails et bretelles.</fr_Plugin-Description>
                             <de_Plugin-Description>Zeichnet horizontale Trassierungen für Straßen, Schienen und Rampen.</de_Plugin-Description>
                             <es_Plugin-Description>Dibuja alineaciones horizontales de carreteras, ferrocarriles y ramales.</es_Plugin-Description>
-                            <Plugin-Date>2026-05-24</Plugin-Date>
+                            <Plugin-Date>2026-06-14</Plugin-Date>
                             <Plugin-Icon>images/mapmode/roadrailalignment.svg</Plugin-Icon>
                             <Plugin-Mainversion>14134</Plugin-Mainversion>
                             <Plugin-Version>${project.version}</Plugin-Version>

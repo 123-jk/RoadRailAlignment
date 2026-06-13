@@ -506,7 +506,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private TieInPoint effectiveSingleTieRampStart(boolean continuousRampStart) {
-        if (!continuousRampStart || controller.isContinuousRampCurvature()) {
+        if (!continuousRampStart || shouldTrackContinuousRampCurvature()) {
             return pendingStartTieIn;
         }
         return new TieInPoint(
@@ -530,7 +530,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
     private void maybePromotePreviousSegment(List<EastNorth> controlPoints) {
         currentSegmentKeepsExitCurvature = false;
-        if (!controller.isContinuousRampCurvature()
+        if (!shouldTrackContinuousRampCurvature()
                 || previousGeneratedSegment == null
                 || previousGeneratedSegment.noExitPoints == null
                 || previousGeneratedSegment.noExitPoints.size() < 2
@@ -542,6 +542,10 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
         Vector2D promotedTangent = endTangent(previousGeneratedSegment.noExitPoints);
         if (promotedTangent == null) {
+            return;
+        }
+
+        if (!isCurvedAwayFromTangent(controlPoints.get(1), promotedTangent)) {
             return;
         }
 
@@ -570,6 +574,20 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         previousGeneratedSegment = null;
         lastGeneratedDetail = tr("Reused the previous ramp curvature for the next same-direction curve.");
         controller.setStatusMessage(tr("Reused the previous ramp curvature for the next same-direction curve."));
+    }
+
+    private boolean isCurvedAwayFromTangent(EastNorth target, Vector2D tangent) {
+        if (pendingStartTieIn == null || target == null || !target.isValid() || tangent == null) {
+            return false;
+        }
+
+        Vector2D offset = Vector2D.between(pendingStartTieIn.getPoint(), target);
+        if (offset.length() < 0.5 || offset.dot(tangent) <= 0.0) {
+            return false;
+        }
+
+        double lateralOffset = Math.abs(offset.cross(tangent.normalize()));
+        return lateralOffset > Math.max(0.5, controller.getNodeSnapToleranceMeters());
     }
 
     private void applyPendingPreviousSegmentPromotion() {
@@ -1016,7 +1034,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             List<EastNorth> controlPoints,
             List<EastNorth> noExitPoints,
             double exitCurvature) {
-        if (!controller.isContinuousRampCurvature()
+        if (!shouldTrackContinuousRampCurvature()
                 || way == null
                 || noExitPoints == null
                 || noExitPoints.size() < 2
@@ -1085,6 +1103,11 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
 
     private double retainedRampCurvature() {
         return controller.isContinuousRampCurvature() ? continuousRampCurvature : 0.0;
+    }
+
+    private boolean shouldTrackContinuousRampCurvature() {
+        return controller.isContinuousRampCurvature()
+                || controller.getAlignmentMode() == AlignmentMode.BASIC_ALIGNMENT;
     }
 
     private double radiusFromCurvature(double curvature) {

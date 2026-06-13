@@ -43,7 +43,7 @@ public final class AlignmentController {
     private String statusMessage = "";
     private boolean continuousMode = true;
     private boolean useSpiralTransitions = true;
-    private boolean continuousRampCurvature = true;
+    private boolean continuousRampCurvature = false;
     private boolean autoOptimizeTwoTieRamp = true;
     private boolean applyOptimizedTwoTieRampParameters = false;
     private boolean snapToExistingNodes = true;
