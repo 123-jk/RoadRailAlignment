@@ -106,7 +106,11 @@ public final class PiArcSampler {
         }
 
         double arcLength = Math.abs(sweep) * radius;
-        int segmentCount = Math.max(1, (int) Math.ceil(arcLength / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                arcLength,
+                intervalMeters,
+                1,
+                tr("The PI circular arc"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {
             double t = (double) i / segmentCount;

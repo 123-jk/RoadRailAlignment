@@ -1,8 +1,11 @@
 package org.openstreetmap.josm.plugins.roadrailalignment.josm;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
+import org.openstreetmap.josm.data.osm.BBox;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
@@ -33,19 +36,27 @@ public final class NodeSnapper {
 
         Node best = null;
         double bestDistance = toleranceMeters;
-        for (Node node : dataSet.getNodes()) {
-            if (!node.isUsable()) {
-                continue;
+        BBox searchBox = SpatialSearchUtil.bboxAround(point, toleranceMeters);
+        Lock readLock = dataSet.getReadLock();
+        readLock.lock();
+        try {
+            Collection<Node> candidates = searchBox == null ? dataSet.getNodes() : dataSet.searchNodes(searchBox);
+            for (Node node : candidates) {
+                if (!node.isUsable()) {
+                    continue;
+                }
+                EastNorth nodePoint = node.getEastNorth(ProjectionRegistry.getProjection());
+                if (nodePoint == null || !nodePoint.isValid()) {
+                    continue;
+                }
+                double distance = nodePoint.distance(point);
+                if (distance <= bestDistance) {
+                    best = node;
+                    bestDistance = distance;
+                }
             }
-            EastNorth nodePoint = node.getEastNorth(ProjectionRegistry.getProjection());
-            if (nodePoint == null || !nodePoint.isValid()) {
-                continue;
-            }
-            double distance = nodePoint.distance(point);
-            if (distance <= bestDistance) {
-                best = node;
-                bestDistance = distance;
-            }
+        } finally {
+            readLock.unlock();
         }
         return Optional.ofNullable(best);
     }

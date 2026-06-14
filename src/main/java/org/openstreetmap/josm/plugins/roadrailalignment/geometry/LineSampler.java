@@ -23,7 +23,7 @@ public final class LineSampler {
         }
 
         double interval = Math.max(1.0, intervalMeters);
-        int segmentCount = Math.max(1, (int) Math.ceil(length / interval));
+        int segmentCount = GeometryUtil.segmentCountForLength(length, interval, 1, tr("The straight alignment"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {
             double t = (double) i / segmentCount;

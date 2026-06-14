@@ -117,7 +117,11 @@ public final class HermiteRampSampler {
         Vector2D m0 = normalizedStartTangent.scale(handleLength);
         Vector2D m1 = normalizedEndTangent.scale(handleLength);
 
-        int segmentCount = Math.max(6, (int) Math.ceil(length / Math.max(1.0, intervalMeters) * 1.4));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                length * 1.4,
+                intervalMeters,
+                6,
+                tr("The two-end ramp"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {
             double t = (double) i / segmentCount;

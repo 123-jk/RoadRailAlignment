@@ -14,6 +14,7 @@ import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.data.coor.EastNorth;
@@ -41,9 +42,14 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Shortcut;
 
 public final class AlignmentMapMode extends MapMode implements PropertyChangeListener {
+    private static final int PREVIEW_COALESCE_MILLIS = 60;
+    private static final long STALE_CLICK_MILLIS = 1000;
+    private static final double PREVIEW_SAMPLE_INTERVAL_MULTIPLIER = 4.0;
+
     private final AlignmentController controller;
     private final Runnable openWindowAction;
     private final PreviewPainter previewPainter = new PreviewPainter();
+    private final Timer previewTimer = new Timer(PREVIEW_COALESCE_MILLIS, event -> flushPendingPreview());
     private TieInPoint pendingStartTieIn;
     private TieInPoint pendingEndTieIn;
     private boolean pendingNewPointStart;
@@ -57,6 +63,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     private double lastSingleTieExitCurvature;
     private boolean bidirectionalExtensionSnap;
     private boolean controllerListenerRegistered;
+    private boolean generating;
+    private long lastPreviewMillis;
+    private EastNorth pendingPreviewCursor;
     private String lastGeneratedDetail = "";
 
     private final MouseAdapter mouseHandler = new MouseAdapter() {
@@ -99,6 +108,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
         this.controller = controller;
         this.openWindowAction = openWindowAction;
+        previewTimer.setRepeats(false);
     }
 
     @Override
@@ -132,6 +142,8 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         mapView.removeMouseMotionListener(mouseHandler);
         mapView.removeKeyListener(keyHandler);
         mapView.removeTemporaryLayer(previewPainter);
+        previewTimer.stop();
+        pendingPreviewCursor = null;
         previewPainter.clear();
         clearPendingState();
         clearContinuousExtension();
@@ -149,7 +161,20 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         if (point == null || !point.isValid()) {
             return;
         }
+        if (System.currentTimeMillis() - event.getWhen() > STALE_CLICK_MILLIS) {
+            event.consume();
+            controller.setStatusMessage(tr("Ignored a delayed click after a busy operation."));
+            return;
+        }
+        if (generating) {
+            event.consume();
+            controller.setStatusMessage(tr("Generation is already in progress."));
+            return;
+        }
 
+        generating = true;
+        previewTimer.stop();
+        pendingPreviewCursor = null;
         try {
             addPointForCurrentMode(point, mapView);
             event.consume();
@@ -191,6 +216,19 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             clearContinuousExtension();
             previewPainter.clear();
             mapView.repaint();
+        } catch (RuntimeException exception) {
+            pendingPromotedPreviousSegment = null;
+            Logging.error(exception);
+            String message = tr("Unexpected error while generating the alignment. See the JOSM log for details.");
+            showWarning(message);
+            controller.setStatusMessage(message);
+            controller.clearControlPoints();
+            clearPendingState();
+            clearContinuousExtension();
+            previewPainter.clear();
+            mapView.repaint();
+        } finally {
+            generating = false;
         }
     }
 
@@ -322,6 +360,34 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         if (cursor == null || !cursor.isValid()) {
             return;
         }
+        requestPreview(cursor);
+    }
+
+    private void requestPreview(EastNorth cursor) {
+        if (generating) {
+            return;
+        }
+        pendingPreviewCursor = cursor;
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastPreviewMillis;
+        if (elapsed >= PREVIEW_COALESCE_MILLIS) {
+            previewTimer.stop();
+            flushPendingPreview();
+            return;
+        }
+        if (!previewTimer.isRunning()) {
+            previewTimer.setInitialDelay((int) Math.max(1, PREVIEW_COALESCE_MILLIS - elapsed));
+            previewTimer.restart();
+        }
+    }
+
+    private void flushPendingPreview() {
+        EastNorth cursor = pendingPreviewCursor;
+        pendingPreviewCursor = null;
+        if (cursor == null || generating) {
+            return;
+        }
+        lastPreviewMillis = System.currentTimeMillis();
         repaintPreview(cursor);
     }
 
@@ -339,6 +405,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             List<EastNorth> preview = samplePreview(controls, previewCursor, mapView);
             previewPainter.setPreview(preview, previewControls);
         } catch (IllegalArgumentException exception) {
+            previewPainter.setPreview(previewControls, previewControls);
+        } catch (RuntimeException exception) {
+            Logging.warn(exception);
             previewPainter.setPreview(previewControls, previewControls);
         }
         mapView.repaint();
@@ -360,7 +429,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         AlignmentMode mode = controller.getAlignmentMode();
         if (mode == AlignmentMode.BASIC_ALIGNMENT && controls.size() == 1) {
             EastNorth basicTarget = pendingNewPointStart ? snapControlPoint(cursor, mapView) : cursor;
-            return sampleBasicSegment(controls.get(0), basicTarget);
+            return sampleBasicSegmentPreview(controls.get(0), basicTarget);
         }
 
         if ((mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.RAMP_BETWEEN_SELECTED_WAYS)
@@ -369,7 +438,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             EastNorth rampTarget = mode == AlignmentMode.RAMP_FROM_SELECTED_WAY
                     ? snapControlPoint(cursor, mapView)
                     : cursor;
-            return sampleSingleTieRamp(rampTarget);
+            return sampleSingleTieRampPreview(rampTarget);
         }
 
         if (mode == AlignmentMode.PI_CIRCULAR_ARC && controls.size() == 2) {
@@ -390,6 +459,20 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         }
 
         return LineSampler.sample(controls.get(0), snapControlPoint(cursor, mapView), controller.getSampleIntervalMeters());
+    }
+
+    private double previewSampleIntervalMeters() {
+        return Math.max(controller.getSampleIntervalMeters() * PREVIEW_SAMPLE_INTERVAL_MULTIPLIER, 10.0);
+    }
+
+    private List<EastNorth> sampleBasicSegmentPreview(EastNorth start, EastNorth target) {
+        if (pendingNewPointStart || pendingStartTieIn == null) {
+            return LineSampler.sample(start, target, previewSampleIntervalMeters());
+        }
+        if (pendingEndTieIn != null) {
+            return sampleTwoTieRampPreview();
+        }
+        return sampleSingleTieRampPreview(target);
     }
 
     private List<EastNorth> sample(List<EastNorth> points) {
@@ -502,6 +585,17 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 target,
                 controller.getRadiusMeters(),
                 controller.getSampleIntervalMeters(),
+                keepTieInDirection);
+    }
+
+    private List<EastNorth> sampleSingleTieRampPreview(EastNorth target) {
+        boolean keepTieInDirection = isContinuousRampStart();
+        TieInPoint startTieIn = effectiveSingleTieRampStart(keepTieInDirection);
+        return RampArcSampler.sample(
+                startTieIn,
+                target,
+                controller.getRadiusMeters(),
+                previewSampleIntervalMeters(),
                 keepTieInDirection);
     }
 
@@ -670,6 +764,25 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     controller.getExtraLoopTurns(),
                     effectiveTieInDirectionMode(),
                     controller.getSampleIntervalMeters());
+        }
+    }
+
+    private List<EastNorth> sampleTwoTieRampPreview() {
+        try {
+            return HermiteRampSampler.sample(
+                    pendingStartTieIn,
+                    pendingEndTieIn,
+                    controller.getRadiusMeters(),
+                    effectiveTieInDirectionMode(),
+                    previewSampleIntervalMeters());
+        } catch (IllegalArgumentException exception) {
+            return StraightInsertRampSampler.sample(
+                    pendingStartTieIn,
+                    pendingEndTieIn,
+                    controller.getRadiusMeters(),
+                    controller.getExtraLoopTurns(),
+                    effectiveTieInDirectionMode(),
+                    previewSampleIntervalMeters());
         }
     }
 

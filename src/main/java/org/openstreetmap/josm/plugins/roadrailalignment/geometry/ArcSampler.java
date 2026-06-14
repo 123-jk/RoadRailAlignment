@@ -1,5 +1,7 @@
 package org.openstreetmap.josm.plugins.roadrailalignment.geometry;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +39,11 @@ public final class ArcSampler {
             double radius,
             double intervalMeters) {
         double arcLength = Math.abs(sweep) * radius;
-        int segmentCount = Math.max(1, (int) Math.ceil(arcLength / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                arcLength,
+                intervalMeters,
+                1,
+                tr("The circular arc"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {
             double t = (double) i / segmentCount;

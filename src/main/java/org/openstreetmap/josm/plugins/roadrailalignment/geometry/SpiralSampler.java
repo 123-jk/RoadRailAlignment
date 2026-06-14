@@ -39,7 +39,11 @@ public final class SpiralSampler {
             turnSign = 1.0;
         }
 
-        int segmentCount = Math.max(2, (int) Math.ceil(length / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                length,
+                intervalMeters,
+                2,
+                tr("The transition spiral"));
         double ds = length / segmentCount;
         double heading = Math.atan2(tangent.y(), tangent.x());
         double x = start.east();
@@ -76,7 +80,11 @@ public final class SpiralSampler {
         }
 
         Vector2D tangent = startTangent.normalize();
-        int segmentCount = Math.max(2, (int) Math.ceil(lengthMeters / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                lengthMeters,
+                intervalMeters,
+                2,
+                tr("The transition spiral"));
         double ds = lengthMeters / segmentCount;
         double heading = Math.atan2(tangent.y(), tangent.x());
         double x = start.east();

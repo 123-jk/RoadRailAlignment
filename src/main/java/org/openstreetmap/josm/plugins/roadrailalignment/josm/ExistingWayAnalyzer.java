@@ -4,6 +4,8 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.concurrent.locks.Lock;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -56,15 +58,26 @@ public final class ExistingWayAnalyzer {
 
         // 扫描全部可用 Way，选出点击位置投影最近的那一条。
         TieInPoint bestTieIn = null;
-        for (Way way : dataSet.getWays()) {
-            if (!isUsableWay(way) || way == excludedWay) {
-                continue;
+        Collection<Way> candidates = dataSet.getWays();
+        org.openstreetmap.josm.data.osm.BBox searchBox = SpatialSearchUtil.bboxAround(clickPoint, maxDistanceMeters);
+        Lock readLock = dataSet.getReadLock();
+        readLock.lock();
+        try {
+            if (searchBox != null) {
+                candidates = dataSet.searchWays(searchBox);
             }
+            for (Way way : candidates) {
+                if (!isUsableWay(way) || way == excludedWay) {
+                    continue;
+                }
 
-            TieInPoint tieInPoint = projectToWay(way, clickPoint);
-            if (bestTieIn == null || tieInPoint.getDistanceToClickMeters() < bestTieIn.getDistanceToClickMeters()) {
-                bestTieIn = tieInPoint;
+                TieInPoint tieInPoint = projectToWay(way, clickPoint);
+                if (bestTieIn == null || tieInPoint.getDistanceToClickMeters() < bestTieIn.getDistanceToClickMeters()) {
+                    bestTieIn = tieInPoint;
+                }
             }
+        } finally {
+            readLock.unlock();
         }
 
         if (bestTieIn == null) {

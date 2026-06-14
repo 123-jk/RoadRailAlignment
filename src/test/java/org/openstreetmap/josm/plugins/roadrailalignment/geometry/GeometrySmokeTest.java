@@ -50,6 +50,7 @@ public final class GeometrySmokeTest {
         controllerCanSetExtraLoopTurns();
         controllerCanSetTieInDirectionMode();
         controllerCanRemoveLastControlPoint();
+        excessiveSamplingIsRejected();
         System.out.println("Geometry smoke tests passed.");
     }
 
@@ -525,6 +526,15 @@ public final class GeometrySmokeTest {
         }
         if (controller.removeLastControlPoint()) {
             throw new AssertionError("controller should report no-op when there are no control points");
+        }
+    }
+
+    private static void excessiveSamplingIsRejected() {
+        try {
+            LineSampler.sample(new EastNorth(0, 0), new EastNorth(GeometryUtil.MAX_SAMPLE_POINTS + 10, 0), 1);
+            throw new AssertionError("excessive straight sampling should be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
         }
     }
 

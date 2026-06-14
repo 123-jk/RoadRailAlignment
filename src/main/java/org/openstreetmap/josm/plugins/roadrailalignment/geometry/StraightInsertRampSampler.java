@@ -250,7 +250,11 @@ public final class StraightInsertRampSampler {
         EastNorth center = (turnSign > 0.0 ? tangent.leftNormal() : tangent.rightNormal())
                 .pointFrom(pose.point, radius);
         Vector2D startRadius = Vector2D.between(center, pose.point);
-        int segmentCount = Math.max(1, (int) Math.ceil(angleRadians * radius / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                angleRadians * radius,
+                intervalMeters,
+                1,
+                tr("The arc/straight connection"));
 
         EastNorth point = pose.point;
         for (int i = 1; i <= segmentCount; i++) {
@@ -271,7 +275,11 @@ public final class StraightInsertRampSampler {
             return pose;
         }
 
-        int segmentCount = Math.max(1, (int) Math.ceil(lengthMeters / Math.max(1.0, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                lengthMeters,
+                intervalMeters,
+                1,
+                tr("The arc/straight connection"));
         Vector2D tangent = new Vector2D(Math.cos(pose.headingRadians), Math.sin(pose.headingRadians));
         EastNorth point = pose.point;
         for (int i = 1; i <= segmentCount; i++) {

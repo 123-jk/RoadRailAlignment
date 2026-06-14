@@ -65,7 +65,26 @@ public final class RampArcSampler {
 
         EastNorth center = leftNormal.pointFrom(start, signedRadius);
         double turnSign = Math.signum(signedRadius);
+        double arcLength = arcLength(center, start, target, radius, turnSign);
+        GeometryUtil.segmentCountForLength(arcLength, intervalMeters, 1, tr("The tangent ramp arc"));
         return ArcSampler.sample(center, start, target, radius, turnSign, intervalMeters);
+    }
+
+    private static double arcLength(
+            EastNorth center,
+            EastNorth start,
+            EastNorth end,
+            double radius,
+            double turnSign) {
+        double startAngle = Math.atan2(start.north() - center.north(), start.east() - center.east());
+        double endAngle = Math.atan2(end.north() - center.north(), end.east() - center.east());
+        double sweep = endAngle - startAngle;
+        if (turnSign > 0.0 && sweep < 0.0) {
+            sweep += Math.PI * 2.0;
+        } else if (turnSign < 0.0 && sweep > 0.0) {
+            sweep -= Math.PI * 2.0;
+        }
+        return Math.abs(sweep) * radius;
     }
 
     public static double signedCurvatureFromTangent(EastNorth start, Vector2D tangent, EastNorth target) {

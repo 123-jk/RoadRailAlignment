@@ -294,7 +294,11 @@ public final class CompoundRampSampler {
         if (length <= 0.001) {
             return;
         }
-        int segmentCount = Math.max(2, (int) Math.ceil(length / Math.max(0.25, intervalMeters)));
+        int segmentCount = GeometryUtil.segmentCountForLength(
+                length,
+                Math.max(0.25, intervalMeters),
+                2,
+                tr("The ramp tail"));
         for (int i = 1; i <= segmentCount; i++) {
             GeometryUtil.appendWithoutDuplicate(result, List.of(interpolate(start, target, (double) i / segmentCount)));
         }
