@@ -147,6 +147,8 @@ CHANGELOG.md         version history
 
 - Generated `Way`s only receive the selected object preset tags; no plugin marker tag is written.
 - Existing-way tie-ins depend on the current editable data layer.
+- The `Recommend by R` transition spiral length is an editing-oriented heuristic, based on a simple radius ratio with bounds and rounding. It helps make generated JOSM geometry smoother and visually closer to reality, but it does not replace engineering design; real transition spiral lengths require more inputs, such as design speed, rate of change of lateral acceleration, superelevation and runoff, and applicable standards.
+- Smaller `Sample interval` values improve curve approximation, but they can also create unnecessary nodes on straight sections. In practical mapping, use it together with JOSM's Simplify Way command (`Shift+Y`) to balance plugin precision and node count.
 - Automatic optimization is a drawing helper, not a full engineering CAD solver.
 
 ## License
