@@ -9,6 +9,7 @@ import org.openstreetmap.josm.data.coor.EastNorth;
 
 public final class PiArcSampler {
     private static final double EPS = 1e-9;
+    private static final int MIN_ARC_SEGMENTS = 6;
 
     private PiArcSampler() {
     }
@@ -77,6 +78,26 @@ public final class PiArcSampler {
         return result;
     }
 
+    public static Vector2D endTangent(EastNorth start, EastNorth pi, EastNorth end, double radiusMeters) {
+        validate(start, pi, end, radiusMeters);
+
+        Vector incomingTangent = Vector.between(pi, start).normalize().scale(-1.0);
+        Vector outgoingTangent = Vector.between(pi, end).normalize();
+        double turnAngle = angleBetween(incomingTangent, outgoingTangent);
+        if (turnAngle < Math.toRadians(1.0) || Math.PI - turnAngle < Math.toRadians(1.0)) {
+            throw new IllegalArgumentException(tr("The PI deflection angle is too small or close to 180 degrees; a circular curve cannot be generated."));
+        }
+
+        double radius = Math.max(1.0, radiusMeters);
+        double tangentLength = radius * Math.tan(turnAngle / 2.0);
+        if (tangentLength >= start.distance(pi) || tangentLength >= pi.distance(end)) {
+            throw new IllegalArgumentException(tr(
+                    "The circular curve radius is too large; tangent length exceeds the segments on both sides of the PI. Reduce the radius or move the control points farther apart."));
+        }
+
+        return new Vector2D(outgoingTangent.x, outgoingTangent.y);
+    }
+
     private static void validate(EastNorth start, EastNorth pi, EastNorth end, double radiusMeters) {
         if (start == null || pi == null || end == null || !start.isValid() || !pi.isValid() || !end.isValid()) {
             throw new IllegalArgumentException(tr("Invalid PI control points."));
@@ -109,7 +130,7 @@ public final class PiArcSampler {
         int segmentCount = GeometryUtil.segmentCountForLength(
                 arcLength,
                 intervalMeters,
-                1,
+                MIN_ARC_SEGMENTS,
                 tr("The PI circular arc"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {

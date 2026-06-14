@@ -349,8 +349,9 @@ public final class CompoundRampSampler {
                 double distanceToTarget = toTarget.length();
                 double lateralError = Math.abs(exitTangent.cross(toTarget));
                 double reversePenalty = Math.max(0.0, -exitTangent.dot(toTarget)) * 20.0;
+                double headingPenalty = headingErrorPenalty(exitTangent, toTarget, transitionLength);
                 double lengthPenalty = (transitionLength - candidateLength) * 0.02;
-                double score = lateralError + reversePenalty + distanceToTarget * 0.02 + lengthPenalty;
+                double score = lateralError + reversePenalty + headingPenalty + distanceToTarget * 0.02 + lengthPenalty;
                 if (score < bestScore) {
                     bestScore = score;
                     best = candidate;
@@ -358,6 +359,15 @@ public final class CompoundRampSampler {
             }
         }
         return best == null ? exitStartBeforeDistanceFromEnd(points, transitionLength, transitionLength) : best;
+    }
+
+    private static double headingErrorPenalty(Vector2D tangent, Vector2D toTarget, double transitionLength) {
+        if (tangent == null || toTarget == null || toTarget.length() <= 0.001) {
+            return 0.0;
+        }
+        Vector2D tailTangent = toTarget.normalize();
+        double headingError = Math.abs(Math.atan2(tangent.cross(tailTangent), tangent.dot(tailTangent)));
+        return headingError * Math.max(1.0, transitionLength);
     }
 
     private static ExitStart exitStartBeforeDistanceFromEnd(

@@ -44,7 +44,9 @@ import org.openstreetmap.josm.tools.Shortcut;
 public final class AlignmentMapMode extends MapMode implements PropertyChangeListener {
     private static final int PREVIEW_COALESCE_MILLIS = 60;
     private static final long STALE_CLICK_MILLIS = 1000;
-    private static final double PREVIEW_SAMPLE_INTERVAL_MULTIPLIER = 4.0;
+    private static final double PREVIEW_SAMPLE_INTERVAL_MULTIPLIER = 2.0;
+    private static final double PREVIEW_MIN_SAMPLE_INTERVAL_METERS = 5.0;
+    private static final double MIN_CONTINUOUS_CURVE_LATERAL_OFFSET_METERS = 0.5;
 
     private final AlignmentController controller;
     private final Runnable openWindowAction;
@@ -462,7 +464,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private double previewSampleIntervalMeters() {
-        return Math.max(controller.getSampleIntervalMeters() * PREVIEW_SAMPLE_INTERVAL_MULTIPLIER, 10.0);
+        return Math.max(
+                controller.getSampleIntervalMeters() * PREVIEW_SAMPLE_INTERVAL_MULTIPLIER,
+                PREVIEW_MIN_SAMPLE_INTERVAL_METERS);
     }
 
     private List<EastNorth> sampleBasicSegmentPreview(EastNorth start, EastNorth target) {
@@ -681,7 +685,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         }
 
         double lateralOffset = Math.abs(offset.cross(tangent.normalize()));
-        return lateralOffset > Math.max(0.5, controller.getNodeSnapToleranceMeters());
+        return lateralOffset > MIN_CONTINUOUS_CURVE_LATERAL_OFFSET_METERS;
     }
 
     private void applyPendingPreviousSegmentPromotion() {
@@ -1051,6 +1055,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 ? null
                 : new ArrayList<>(lastSingleTieNoExitPoints);
         double rememberedExitCurvature = lastSingleTieExitCurvature;
+        Vector2D rememberedRampEndTangent = retainedSingleTieRampEndTangent(mode, wasNewPointStart, points);
         boolean canKeepEndPoint = controller.isContinuousMode()
                 && (mode == AlignmentMode.STRAIGHT_LINE
                 || mode == AlignmentMode.PI_CIRCULAR_ARC
@@ -1066,7 +1071,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 && sampledPoints != null
                 && !sampledPoints.isEmpty()) {
             EastNorth endPoint = sampledPoints.get(sampledPoints.size() - 1);
-            Vector2D tangent = endTangent(sampledPoints);
+            Vector2D tangent = rememberedRampEndTangent == null
+                    ? endTangent(sampledPoints)
+                    : rememberedRampEndTangent;
             double curvature = keepCurrentExitCurvature ? endSignedCurvature(sampledPoints) : 0.0;
             controller.keepOnlyControlPoint(endPoint);
             continuousAnchorPoint = endPoint;
@@ -1097,7 +1104,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     || mode == AlignmentMode.LARGE_SWEEP_ARC
                     || mode == AlignmentMode.BASIC_ALIGNMENT) {
                 continuousAnchorPoint = endPoint;
-                continuousExtensionTangent = endTangent(sampledPoints);
+                continuousExtensionTangent = retainedEndTangent(mode, points, sampledPoints);
                 continuousRampCurvature = 0.0;
                 bidirectionalExtensionSnap = false;
                 if (mode == AlignmentMode.BASIC_ALIGNMENT && continuousExtensionTangent != null) {
@@ -1128,6 +1135,81 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
         }
         pendingNewPointStart = false;
         currentSegmentKeepsExitCurvature = false;
+    }
+
+    private Vector2D retainedSingleTieRampEndTangent(
+            AlignmentMode mode,
+            boolean wasNewPointStart,
+            List<EastNorth> controlPoints) {
+        if (!(mode == AlignmentMode.RAMP_FROM_SELECTED_WAY || mode == AlignmentMode.BASIC_ALIGNMENT)
+                || wasNewPointStart
+                || pendingStartTieIn == null
+                || pendingEndTieIn != null
+                || controlPoints == null
+                || controlPoints.size() < 2
+                || controller.isUseSpiralTransitions()
+                && controller.getSpiralLengthMeters() > 0.0) {
+            return null;
+        }
+
+        try {
+            boolean keepTieInDirection = isContinuousRampStart();
+            return RampArcSampler.endTangent(
+                    effectiveSingleTieRampStart(keepTieInDirection),
+                    controlPoints.get(controlPoints.size() - 1),
+                    controller.getRadiusMeters(),
+                    keepTieInDirection);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private Vector2D retainedEndTangent(
+            AlignmentMode mode,
+            List<EastNorth> controlPoints,
+            List<EastNorth> sampledPoints) {
+        try {
+            if ((mode == AlignmentMode.STRAIGHT_LINE || mode == AlignmentMode.BASIC_ALIGNMENT)
+                    && controlPoints != null
+                    && controlPoints.size() >= 2) {
+                return Vector2D.between(
+                        controlPoints.get(0),
+                        controlPoints.get(controlPoints.size() - 1)).normalize();
+            }
+
+            if (mode == AlignmentMode.PI_CIRCULAR_ARC
+                    && controlPoints != null
+                    && controlPoints.size() >= 3) {
+                if (controller.isUseSpiralTransitions() && controller.getSpiralLengthMeters() > 0.0) {
+                    return PiSpiralArcSampler.endTangent(
+                            controlPoints.get(0),
+                            controlPoints.get(1),
+                            controlPoints.get(2),
+                            controller.getRadiusMeters(),
+                            controller.getSpiralLengthMeters());
+                }
+                return PiArcSampler.endTangent(
+                        controlPoints.get(0),
+                        controlPoints.get(1),
+                        controlPoints.get(2),
+                        controller.getRadiusMeters());
+            }
+
+            if (mode == AlignmentMode.LARGE_SWEEP_ARC
+                    && controlPoints != null
+                    && controlPoints.size() >= 3) {
+                return LargeSweepArcSampler.endTangent(
+                        controlPoints.get(0),
+                        controlPoints.get(1),
+                        controlPoints.get(2),
+                        controller.getRadiusMeters(),
+                        controller.getExtraLoopTurns(),
+                        controller.isUseSpiralTransitions() ? controller.getSpiralLengthMeters() : 0.0);
+            }
+        } catch (IllegalArgumentException exception) {
+            // Fall back to sampled geometry below; the original sampling already validated the segment.
+        }
+        return endTangent(sampledPoints);
     }
 
     private EastNorth continuousRetainedPoint(

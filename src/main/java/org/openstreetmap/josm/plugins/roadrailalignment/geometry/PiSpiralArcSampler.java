@@ -105,6 +105,47 @@ public final class PiSpiralArcSampler {
         return result;
     }
 
+    public static Vector2D endTangent(
+            EastNorth start,
+            EastNorth pi,
+            EastNorth end,
+            double radiusMeters,
+            double spiralLengthMeters) {
+        if (spiralLengthMeters <= 0.0) {
+            return PiArcSampler.endTangent(start, pi, end, radiusMeters);
+        }
+        if (start == null || pi == null || end == null || !start.isValid() || !pi.isValid() || !end.isValid()) {
+            throw new IllegalArgumentException(tr("Invalid PI control points."));
+        }
+
+        Vector2D incomingTangent = Vector2D.between(pi, start).normalize().reverse();
+        Vector2D outgoingTangent = Vector2D.between(pi, end).normalize();
+        double turnAngle = Math.acos(Math.max(-1.0, Math.min(1.0, incomingTangent.dot(outgoingTangent))));
+        if (turnAngle < MIN_ANGLE_RADIANS || Math.PI - turnAngle < MIN_ANGLE_RADIANS) {
+            throw new IllegalArgumentException(tr("The PI deflection angle is too small or close to 180 degrees; a curve cannot be generated."));
+        }
+
+        double turnSign = Math.signum(incomingTangent.cross(outgoingTangent));
+        if (turnSign == 0.0) {
+            throw new IllegalArgumentException(tr("The selected PI point cannot form a valid turn."));
+        }
+
+        double radius = Math.max(1.0, radiusMeters);
+        double spiralLength = Math.max(0.0, spiralLengthMeters);
+        double spiralAngle = spiralLength / (2.0 * radius);
+        if (turnAngle <= 2.0 * spiralAngle) {
+            throw new IllegalArgumentException(tr("The transition spiral length is too large for the PI deflection angle."));
+        }
+
+        double shift = spiralLength * spiralLength / (24.0 * radius);
+        double tangentLength = (radius + shift) * Math.tan(turnAngle / 2.0) + spiralLength / 2.0;
+        if (tangentLength >= start.distance(pi) || tangentLength >= pi.distance(end)) {
+            throw new IllegalArgumentException(tr("The transition-plus-circular curve tangent length is too large. Reduce the radius or transition spiral length."));
+        }
+
+        return outgoingTangent;
+    }
+
     private static Vector2D normalForTurn(Vector2D tangent, double turnSign) {
         return turnSign > 0.0 ? tangent.leftNormal() : tangent.rightNormal();
     }

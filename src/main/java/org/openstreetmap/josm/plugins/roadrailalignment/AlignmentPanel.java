@@ -454,7 +454,10 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             spiralLengthSpinner.setValue(controller.getSpiralLengthMeters());
             spiralTransitionCheckBox.setSelected(controller.isUseSpiralTransitions());
             continuousRampCurvatureCheckBox.setSelected(controller.isContinuousRampCurvature());
-            continuousRampCurvatureCheckBox.setEnabled(controller.isContinuousMode()
+            boolean showContinuousRampCurvature = controller.getAlignmentMode() == AlignmentMode.RAMP_FROM_SELECTED_WAY;
+            continuousRampCurvatureCheckBox.setVisible(showContinuousRampCurvature);
+            continuousRampCurvatureCheckBox.setEnabled(showContinuousRampCurvature
+                    && controller.isContinuousMode()
                     && controller.isUseSpiralTransitions());
             autoOptimizeTwoTieCheckBox.setSelected(controller.isAutoOptimizeTwoTieRamp());
             applyOptimizedTwoTieParametersCheckBox.setSelected(controller.isApplyOptimizedTwoTieRampParameters());
@@ -471,6 +474,8 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
                     || controller.getAlignmentMode() == AlignmentMode.BASIC_ALIGNMENT);
             updateControlPointLabel();
             updateStatusLabel();
+            revalidate();
+            repaint();
         } finally {
             updatingControls = false;
         }

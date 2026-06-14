@@ -19,8 +19,10 @@ public final class GeometrySmokeTest {
         piArcKeepsEndpoints();
         piArcCanStopAtCurveEnd();
         piArcUsesTurnAngleNotInteriorAngle();
+        piArcEndTangentIsAnalyticForShallowCurve();
         piSpiralArcKeepsEndpoints();
         piSpiralArcCanStopAtCurveEnd();
+        piSpiralArcEndTangentIsAnalyticForShallowCurve();
         piSpiralArcDoesNotExceedCircularCurvature();
         largeSweepArcSupportsMoreThanHalfTurn();
         largeSweepArcSupportsExtraLoop();
@@ -28,6 +30,7 @@ public final class GeometrySmokeTest {
         singleTieRampCanKeepTieInDirectionForUTurn();
         compoundSingleTieRampKeepsEndpoints();
         compoundSingleTieRampExitTransitionConnectsSmoothly();
+        compoundSingleTieRampExitTailAlignsSmoothly();
         compoundSingleTieRampCanStartFromStoredCurvature();
         compoundSingleTieRampLeavesTowardTargetSide();
         twoTieRampKeepsEndpoints();
@@ -50,6 +53,7 @@ public final class GeometrySmokeTest {
         controllerCanSetExtraLoopTurns();
         controllerCanSetTieInDirectionMode();
         controllerCanRemoveLastControlPoint();
+        controllerCanPromoteShallowSameDirectionCurve();
         excessiveSamplingIsRejected();
         System.out.println("Geometry smoke tests passed.");
     }
@@ -96,6 +100,25 @@ public final class GeometrySmokeTest {
         }
     }
 
+    private static void piArcEndTangentIsAnalyticForShallowCurve() {
+        EastNorth start = new EastNorth(0, 0);
+        EastNorth pi = new EastNorth(1000, 0);
+        EastNorth end = new EastNorth(
+                1000 + Math.cos(Math.toRadians(5)) * 1000,
+                Math.sin(Math.toRadians(5)) * 1000);
+        List<EastNorth> points = PiArcSampler.sample(start, pi, end, 200, 1000, false);
+        Vector2D sampledChordTangent = Vector2D.between(
+                points.get(points.size() - 2),
+                points.get(points.size() - 1)).normalize();
+        Vector2D analyticTangent = PiArcSampler.endTangent(start, pi, end, 200);
+        Vector2D expectedTangent = Vector2D.between(pi, end).normalize();
+
+        assertAngle(analyticTangent, expectedTangent, 1e-9, "PI arc analytic end tangent");
+        if (angleBetween(sampledChordTangent, expectedTangent) > Math.toRadians(0.5)) {
+            throw new AssertionError("shallow PI arc end chord should stay close to the outgoing tangent");
+        }
+    }
+
     private static void piSpiralArcKeepsEndpoints() {
         EastNorth start = new EastNorth(0, 0);
         EastNorth pi = new EastNorth(200, 0);
@@ -114,6 +137,17 @@ public final class GeometrySmokeTest {
         if (points.get(points.size() - 1).distance(end) < 20) {
             throw new AssertionError("PI spiral arc should stop at curve end before the exit tangent");
         }
+    }
+
+    private static void piSpiralArcEndTangentIsAnalyticForShallowCurve() {
+        EastNorth start = new EastNorth(0, 0);
+        EastNorth pi = new EastNorth(1000, 0);
+        EastNorth end = new EastNorth(
+                1000 + Math.cos(Math.toRadians(5)) * 1000,
+                Math.sin(Math.toRadians(5)) * 1000);
+        Vector2D analyticTangent = PiSpiralArcSampler.endTangent(start, pi, end, 200, 10);
+        Vector2D expectedTangent = Vector2D.between(pi, end).normalize();
+        assertAngle(analyticTangent, expectedTangent, 1e-9, "PI spiral arc analytic end tangent");
     }
 
     private static void piSpiralArcDoesNotExceedCircularCurvature() {
@@ -196,6 +230,17 @@ public final class GeometrySmokeTest {
         }
         if (maxHeadingChange(points) > 0.35) {
             throw new AssertionError("exit transition should connect smoothly to the circular arc");
+        }
+    }
+
+    private static void compoundSingleTieRampExitTailAlignsSmoothly() {
+        TieInPoint tieIn = new TieInPoint(new EastNorth(0, 0), new Vector2D(1, 0), null, 0, 0,
+                0, Double.NaN, 0.0);
+        EastNorth target = new EastNorth(140, 25);
+        List<EastNorth> points = CompoundRampSampler.sampleSingleTieRamp(tieIn, target, 20, 45, 5);
+        assertPoint(points.get(points.size() - 1), target, "compound exit tail end");
+        if (tailHeadingChange(points) > Math.toRadians(5.0)) {
+            throw new AssertionError("exit transition tail should align smoothly with the final straight segment");
         }
     }
 
@@ -529,6 +574,38 @@ public final class GeometrySmokeTest {
         }
     }
 
+    private static void controllerCanPromoteShallowSameDirectionCurve() {
+        EastNorth start = new EastNorth(0, 0);
+        EastNorth firstTarget = new EastNorth(120, 30);
+        TieInPoint firstTie = new TieInPoint(start, new Vector2D(1, 0), null, -1, 0,
+                0, Double.NaN, 0.0);
+        List<EastNorth> firstNoExit = CompoundRampSampler.sampleSingleTieRamp(
+                firstTie, firstTarget, 20, 40, 5, true, true);
+        Vector2D tangent = endTangent(firstNoExit);
+        double curvature = endSignedCurvature(firstNoExit);
+        EastNorth shallowTarget = tangent.pointFrom(firstTarget, 80);
+        shallowTarget = shallowTarget.add(tangent.leftNormal().scale(2.0).x(), tangent.leftNormal().scale(2.0).y());
+        double nextCurvature = RampArcSampler.signedCurvatureFromTangent(firstTarget, tangent, shallowTarget, true);
+
+        if (Math.abs(Vector2D.between(firstTarget, shallowTarget).cross(tangent.normalize())) >= 8.0) {
+            throw new AssertionError("test setup should stay below the default node snap tolerance");
+        }
+        if (Math.signum(curvature) == 0.0 || Math.signum(curvature) != Math.signum(nextCurvature)) {
+            throw new AssertionError("shallow target should be a same-direction continuation");
+        }
+    }
+
+    private static Vector2D endTangent(List<EastNorth> points) {
+        EastNorth end = points.get(points.size() - 1);
+        for (int i = points.size() - 2; i >= 0; i--) {
+            EastNorth previous = points.get(i);
+            if (previous.distance(end) > 0.001) {
+                return Vector2D.between(previous, end).normalize();
+            }
+        }
+        throw new AssertionError("points should have a usable end tangent");
+    }
+
     private static void excessiveSamplingIsRejected() {
         try {
             LineSampler.sample(new EastNorth(0, 0), new EastNorth(GeometryUtil.MAX_SAMPLE_POINTS + 10, 0), 1);
@@ -579,6 +656,38 @@ public final class GeometrySmokeTest {
             previous = current;
         }
         return max;
+    }
+
+    private static double tailHeadingChange(List<EastNorth> points) {
+        if (points == null || points.size() < 3) {
+            return 0.0;
+        }
+        Vector2D previous = null;
+        for (int i = points.size() - 1; i > 0; i--) {
+            EastNorth first = points.get(i - 1);
+            EastNorth second = points.get(i);
+            if (first.distance(second) > 0.001) {
+                Vector2D current = Vector2D.between(first, second).normalize();
+                if (previous != null) {
+                    return angleBetween(current, previous);
+                }
+                previous = current;
+            }
+        }
+        return 0.0;
+    }
+
+    private static void assertAngle(Vector2D actual, Vector2D expected, double toleranceRadians, String label) {
+        double angle = angleBetween(actual, expected);
+        if (angle > toleranceRadians) {
+            throw new AssertionError(label + " angle mismatch: " + angle);
+        }
+    }
+
+    private static double angleBetween(Vector2D first, Vector2D second) {
+        double cross = first.cross(second);
+        double dot = first.dot(second);
+        return Math.abs(Math.atan2(cross, dot));
     }
 
     private static double endSignedCurvature(List<EastNorth> points) {

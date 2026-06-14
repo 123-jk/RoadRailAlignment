@@ -91,6 +91,51 @@ public final class RampArcSampler {
         return signedCurvatureFromTangent(start, tangent, target, false);
     }
 
+    public static Vector2D endTangent(
+            TieInPoint tieInPoint,
+            EastNorth target,
+            double minRadiusMeters,
+            boolean keepTieInDirection) {
+        if (tieInPoint == null || tieInPoint.getPoint() == null || target == null || !target.isValid()) {
+            throw new IllegalArgumentException(tr("Invalid ramp tie-in point or target point."));
+        }
+
+        EastNorth start = tieInPoint.getPoint();
+        Vector2D offset = Vector2D.between(start, target);
+        double targetDistance = offset.length();
+        if (targetDistance < MIN_TARGET_DISTANCE_METERS) {
+            throw new IllegalArgumentException(tr("The ramp target point is too close to the tie-in point."));
+        }
+
+        Vector2D tangent = tieInPoint.getTangent().normalize();
+        if (!keepTieInDirection && offset.dot(tangent) < 0.0) {
+            tangent = tangent.reverse();
+        }
+
+        Vector2D leftNormal = tangent.leftNormal();
+        double signedDenominator = 2.0 * offset.dot(leftNormal);
+        if (Math.abs(signedDenominator) < EPS) {
+            if (offset.dot(tangent) <= 0.0) {
+                throw new IllegalArgumentException(tr("The target point is opposite the tie-in tangent direction."));
+            }
+            return offset.normalize();
+        }
+
+        double signedRadius = offset.lengthSquared() / signedDenominator;
+        double radius = Math.abs(signedRadius);
+        double requiredMinRadius = Math.max(1.0, minRadiusMeters);
+        if (radius < requiredMinRadius) {
+            throw new IllegalArgumentException(tr(
+                    "The tangent ramp radius is {0} m, below the minimum radius {1} m.",
+                    RadiusFormatter.formatMetersBelowThreshold(radius, requiredMinRadius),
+                    RadiusFormatter.formatThresholdMeters(requiredMinRadius, radius)));
+        }
+
+        EastNorth center = leftNormal.pointFrom(start, signedRadius);
+        Vector2D radiusAtEnd = Vector2D.between(center, target).normalize();
+        return signedRadius > 0.0 ? radiusAtEnd.leftNormal() : radiusAtEnd.rightNormal();
+    }
+
     public static double signedCurvatureFromTangent(
             EastNorth start,
             Vector2D tangent,

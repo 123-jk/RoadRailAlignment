@@ -8,6 +8,8 @@ import java.util.List;
 import org.openstreetmap.josm.data.coor.EastNorth;
 
 public final class ArcSampler {
+    private static final int MIN_ARC_SEGMENTS = 6;
+
     private ArcSampler() {
     }
 
@@ -42,7 +44,7 @@ public final class ArcSampler {
         int segmentCount = GeometryUtil.segmentCountForLength(
                 arcLength,
                 intervalMeters,
-                1,
+                MIN_ARC_SEGMENTS,
                 tr("The circular arc"));
         List<EastNorth> points = new ArrayList<>(segmentCount + 1);
         for (int i = 0; i <= segmentCount; i++) {
