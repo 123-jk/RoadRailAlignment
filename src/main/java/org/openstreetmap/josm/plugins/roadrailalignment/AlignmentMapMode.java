@@ -194,6 +194,9 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             List<EastNorth> controlPoints = controller.snapshotControlPoints();
             lastGeneratedDetail = "";
             maybePromotePreviousSegment(controlPoints);
+            if (controller.isContinuousMode()) {
+                currentSegmentKeepsExitCurvature = true;
+            }
             clearLastSingleTieSample();
             List<EastNorth> sampledPoints = sample(controlPoints);
             applyPendingPreviousSegmentPromotion();
@@ -202,7 +205,8 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                     controller.getFeatureType(),
                     controller.isSnapToExistingNodes(),
                     controller.getNodeSnapToleranceMeters(),
-                    controlPoints);
+                    controlPoints,
+                    controller.isSimplifyCurves());
             controller.setStatusMessage(lastGeneratedDetail == null || lastGeneratedDetail.isEmpty()
                     ? tr("Generated alignment with {0} nodes.", way.getNodesCount())
                     : tr("Generated alignment with {0} nodes. {1}", way.getNodesCount(), lastGeneratedDetail));
@@ -464,9 +468,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private double previewSampleIntervalMeters() {
-        return Math.max(
-                controller.getSampleIntervalMeters() * PREVIEW_SAMPLE_INTERVAL_MULTIPLIER,
-                PREVIEW_MIN_SAMPLE_INTERVAL_METERS);
+        return controller.getSampleIntervalMeters();
     }
 
     private List<EastNorth> sampleBasicSegmentPreview(EastNorth start, EastNorth target) {
@@ -595,6 +597,16 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     private List<EastNorth> sampleSingleTieRampPreview(EastNorth target) {
         boolean keepTieInDirection = isContinuousRampStart();
         TieInPoint startTieIn = effectiveSingleTieRampStart(keepTieInDirection);
+        if (controller.isUseSpiralTransitions() && controller.getSpiralLengthMeters() > 0.0) {
+            return CompoundRampSampler.sampleSingleTieRamp(
+                    startTieIn,
+                    target,
+                    controller.getRadiusMeters(),
+                    controller.getSpiralLengthMeters(),
+                    previewSampleIntervalMeters(),
+                    keepTieInDirection,
+                    currentSegmentKeepsExitCurvature);
+        }
         return RampArcSampler.sample(
                 startTieIn,
                 target,
@@ -699,7 +711,8 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
                 segment.noExitPoints,
                 controller.isSnapToExistingNodes(),
                 controller.getNodeSnapToleranceMeters(),
-                segment.controlPoints);
+                segment.controlPoints,
+                controller.isSimplifyCurves());
     }
 
     private double estimateCurrentSingleTieCurvature(EastNorth target) {
@@ -772,6 +785,26 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
     }
 
     private List<EastNorth> sampleTwoTieRampPreview() {
+        if (controller.isAutoOptimizeTwoTieRamp()) {
+            OptimizedTwoTieRampSampler.Result result = OptimizedTwoTieRampSampler.sample(
+                    pendingStartTieIn,
+                    pendingEndTieIn,
+                    controller.getRadiusMeters(),
+                    controller.isUseSpiralTransitions(),
+                    controller.getExtraLoopTurns(),
+                    effectiveTieInDirectionMode(),
+                    previewSampleIntervalMeters());
+            return result.getPoints();
+        }
+        if (controller.isUseSpiralTransitions() && controller.getSpiralLengthMeters() > 0.0) {
+            return CompoundRampSampler.sampleTwoTieRamp(
+                    pendingStartTieIn,
+                    pendingEndTieIn,
+                    controller.getRadiusMeters(),
+                    controller.getSpiralLengthMeters(),
+                    effectiveTieInDirectionMode(),
+                    previewSampleIntervalMeters());
+        }
         try {
             return HermiteRampSampler.sample(
                     pendingStartTieIn,
@@ -1134,7 +1167,7 @@ public final class AlignmentMapMode extends MapMode implements PropertyChangeLis
             previousGeneratedSegment = null;
         }
         pendingNewPointStart = false;
-        currentSegmentKeepsExitCurvature = false;
+        currentSegmentKeepsExitCurvature = true;
     }
 
     private Vector2D retainedSingleTieRampEndTangent(

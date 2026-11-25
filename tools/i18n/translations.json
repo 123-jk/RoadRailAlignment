@@ -175,6 +175,20 @@
       "es": "Usar espirales de transición"
     },
     {
+      "source": "Auto-update spiral length",
+      "zh_CN": "自动更新缓和曲线长度",
+      "fr": "Mise à jour automatique de la longueur de spirale",
+      "de": "Übergangsbogenlänge automatisch aktualisieren",
+      "es": "Actualizar automáticamente la longitud de la espiral"
+    },
+    {
+      "source": "Simplify curves (0.5m)",
+      "zh_CN": "曲线简化 (0.5m)",
+      "fr": "Simplifier les courbes (0.5m)",
+      "de": "Kurven vereinfachen (0.5m)",
+      "es": "Simplificar curvas (0.5m)"
+    },
+    {
       "source": "Auto-optimize max R/transition for two-way connection",
       "zh_CN": "两线连接自动最大 R/缓和",
       "fr": "Optimiser automatiquement R max/transition pour deux chemins",

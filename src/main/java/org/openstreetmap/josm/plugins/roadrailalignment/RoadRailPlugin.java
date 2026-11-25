@@ -13,19 +13,24 @@ public final class RoadRailPlugin extends Plugin {
 
     public RoadRailPlugin(PluginInformation info) {
         super(info);
+        // 设置默认值
+        controller.setContinuousMode(true);           // 连续作业默认开启
+        controller.setApplyOptimizedTwoTieRampParameters(false);  // 生成后回填默认关闭
     }
 
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
         super.mapFrameInitialized(oldFrame, newFrame);
-        controller.clearControlPoints();
-        disposeWindow();
-
         if (newFrame == null) {
+            controller.clearControlPoints();
+            disposeWindow();
             dialog = null;
             mapMode = null;
             return;
         }
+
+        controller.clearControlPoints();
+        disposeWindow();
 
         dialog = new AlignmentDialog(
                 controller,

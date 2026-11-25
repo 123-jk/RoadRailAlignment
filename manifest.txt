@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Plugin-Class: org.openstreetmap.josm.plugins.roadrailalignment.RoadRailPlugin
+Plugin-Description: Draw road, rail, and ramp horizontal alignments.
+zh_CN_Plugin-Description: 绘制道路、铁路和匝道平面线形。
+fr_Plugin-Description: Dessine les alignements horizontaux de routes, rails et bretelles.
+de_Plugin-Description: Zeichnet horizontale Trassierungen für Straßen, Schienen und Rampen.
+es_Plugin-Description: Dibuja alineaciones horizontales de carreteras, ferrocarriles y ramales.
+Plugin-Date: 2026-11-26
+Plugin-Icon: images/mapmode/roadrailalignment.svg
+Plugin-Mainversion: 14134
+Plugin-Version: 0.2.4
+Plugin-Canloadatruntime: true

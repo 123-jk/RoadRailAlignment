@@ -34,8 +34,12 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
     private JComboBox<AlignmentMode> modeComboBox;
     private JSpinner intervalSpinner;
     private JSpinner radiusSpinner;
+    private JSpinner designSpeedSpinner;
+    private JCheckBox useDesignSpeedCheckBox;
     private JSpinner spiralLengthSpinner;
     private JCheckBox spiralTransitionCheckBox;
+    private JCheckBox autoUpdateSpiralLengthCheckBox;
+    private JCheckBox simplifyCurvesCheckBox;
     private JCheckBox continuousRampCurvatureCheckBox;
     private JCheckBox autoOptimizeTwoTieCheckBox;
     private JCheckBox applyOptimizedTwoTieParametersCheckBox;
@@ -132,6 +136,25 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             }
         });
 
+        designSpeedSpinner = new JSpinner(new SpinnerNumberModel(
+                80.0,
+                10.0,
+                200.0,
+                5.0));
+        designSpeedSpinner.addChangeListener(event -> {
+            if (!updatingControls) {
+                controller.setDesignSpeedKph(((Number) designSpeedSpinner.getValue()).doubleValue());
+            }
+        });
+
+        useDesignSpeedCheckBox = new JCheckBox(tr("按速度推荐"));
+        useDesignSpeedCheckBox.addActionListener(event -> {
+            if (!updatingControls) {
+                controller.setUseDesignSpeed(useDesignSpeedCheckBox.isSelected());
+                updateAllControls(); // Update UI state
+            }
+        });
+
         spiralLengthSpinner = new JSpinner(new SpinnerNumberModel(
                 controller.getSpiralLengthMeters(),
                 0.0,
@@ -147,6 +170,20 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         spiralTransitionCheckBox.addActionListener(event -> {
             if (!updatingControls) {
                 controller.setUseSpiralTransitions(spiralTransitionCheckBox.isSelected());
+            }
+        });
+
+        autoUpdateSpiralLengthCheckBox = new JCheckBox(tr("Auto-update spiral length"));
+        autoUpdateSpiralLengthCheckBox.addActionListener(event -> {
+            if (!updatingControls) {
+                controller.setAutoUpdateSpiralLength(autoUpdateSpiralLengthCheckBox.isSelected());
+            }
+        });
+
+        simplifyCurvesCheckBox = new JCheckBox(tr("Simplify curves (0.5m)"));
+        simplifyCurvesCheckBox.addActionListener(event -> {
+            if (!updatingControls) {
+                controller.setSimplifyCurves(simplifyCurvesCheckBox.isSelected());
             }
         });
 
@@ -215,12 +252,15 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             }
         });
 
-        JButton recommendSpiralButton = new JButton(tr("Recommend by R"));
+        JButton recommendSpiralButton = new JButton(tr("按 R 推荐"));
         recommendSpiralButton.addActionListener(event -> applyRecommendedSpiralLength());
+        JButton recommendBySpeedButton = new JButton(tr("按 V 推荐"));
+        recommendBySpeedButton.addActionListener(event -> applyRecommendedSpiralLengthBySpeed());
 
         JPanel spiralLengthPanel = new JPanel(new BorderLayout(4, 0));
         spiralLengthPanel.add(spiralLengthSpinner, BorderLayout.CENTER);
-        spiralLengthPanel.add(recommendSpiralButton, BorderLayout.EAST);
+        spiralLengthPanel.add(recommendSpiralButton, BorderLayout.WEST);
+        spiralLengthPanel.add(recommendBySpeedButton, BorderLayout.EAST);
 
         JButton clearButton = new JButton(tr("Clear control points"));
         clearButton.addActionListener(event -> clearInput());
@@ -288,19 +328,28 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
         gc.gridwidth = 2;
         gc.weightx = 1.0;
         gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.gridy++;
         add(spiralTransitionCheckBox, gc);
 
         gc.gridy++;
-        add(continuousRampCurvatureCheckBox, gc);
+        add(autoUpdateSpiralLengthCheckBox, gc);
 
+        gc.gridy++;
+        add(simplifyCurvesCheckBox, gc);
+
+        gc.gridy++;
+        add(useDesignSpeedCheckBox, gc);
+
+        gc.gridy++;
+        add(new JLabel(tr("设计速度 (km/h):")), gc);
+        gc.gridx = 1;
+        add(designSpeedSpinner, gc);
+        gc.gridx = 0;
+
+        gc.gridy++;
+        add(continuousRampCurvatureCheckBox, gc);
         gc.gridy++;
         add(autoOptimizeTwoTieCheckBox, gc);
-
-        gc.gridy++;
-        add(applyOptimizedTwoTieParametersCheckBox, gc);
-
-        gc.gridy++;
-        add(continuousCheckBox, gc);
 
         gc.gridy++;
         add(nodeSnapCheckBox, gc);
@@ -363,6 +412,20 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
 
         gc.gridy++;
         add(statusLabel, gc);
+    }
+
+    private void applyRecommendedSpiralLengthBySpeed() {
+        double radius = controller.getRadiusMeters();
+        double speed = controller.getDesignSpeedKph();
+        double recommended = controller.recommendSpiralLengthBySpeed(radius, speed);
+        controller.setUseSpiralTransitions(true);
+        controller.setSpiralLengthMeters(recommended);
+        controller.setStatusMessage(tr(
+                "针对 R={0} m, V={1} km/h 推荐缓和曲线长度 {2} m。",
+                Math.round(radius),
+                Math.round(speed),
+                Math.round(recommended)));
+        updateAllControls();
     }
 
     private void applyRecommendedSpiralLength() {
@@ -429,6 +492,10 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
                 || AlignmentController.PROP_SAMPLE_INTERVAL.equals(property)
                 || AlignmentController.PROP_RADIUS.equals(property)
                 || AlignmentController.PROP_SPIRAL_LENGTH.equals(property)
+                || "autoUpdateSpiralLength".equals(property)
+                || "simplifyCurves".equals(property)
+                || "designSpeedKph".equals(property)
+                || "useDesignSpeed".equals(property)
                 || AlignmentController.PROP_CONTINUOUS_MODE.equals(property)
                 || AlignmentController.PROP_USE_SPIRAL_TRANSITIONS.equals(property)
                 || AlignmentController.PROP_CONTINUOUS_RAMP_CURVATURE.equals(property)
@@ -451,8 +518,13 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
             modeComboBox.setSelectedItem(controller.getAlignmentMode());
             intervalSpinner.setValue(controller.getSampleIntervalMeters());
             radiusSpinner.setValue(controller.getRadiusMeters());
+            designSpeedSpinner.setValue(controller.getDesignSpeedKph());
+            designSpeedSpinner.setEnabled(controller.isUseDesignSpeed());
+            useDesignSpeedCheckBox.setSelected(controller.isUseDesignSpeed());
             spiralLengthSpinner.setValue(controller.getSpiralLengthMeters());
             spiralTransitionCheckBox.setSelected(controller.isUseSpiralTransitions());
+            autoUpdateSpiralLengthCheckBox.setSelected(controller.isAutoUpdateSpiralLength());
+            simplifyCurvesCheckBox.setSelected(controller.isSimplifyCurves());
             continuousRampCurvatureCheckBox.setSelected(controller.isContinuousRampCurvature());
             boolean showContinuousRampCurvature = controller.getAlignmentMode() == AlignmentMode.RAMP_FROM_SELECTED_WAY;
             continuousRampCurvatureCheckBox.setVisible(showContinuousRampCurvature);
@@ -460,9 +532,6 @@ public final class AlignmentPanel extends JPanel implements PropertyChangeListen
                     && controller.isContinuousMode()
                     && controller.isUseSpiralTransitions());
             autoOptimizeTwoTieCheckBox.setSelected(controller.isAutoOptimizeTwoTieRamp());
-            applyOptimizedTwoTieParametersCheckBox.setSelected(controller.isApplyOptimizedTwoTieRampParameters());
-            applyOptimizedTwoTieParametersCheckBox.setEnabled(controller.isAutoOptimizeTwoTieRamp());
-            continuousCheckBox.setSelected(controller.isContinuousMode());
             nodeSnapCheckBox.setSelected(controller.isSnapToExistingNodes());
             nodeSnapToleranceSpinner.setValue(controller.getNodeSnapToleranceMeters());
             extraLoopTurnsSpinner.setValue(controller.getExtraLoopTurns());

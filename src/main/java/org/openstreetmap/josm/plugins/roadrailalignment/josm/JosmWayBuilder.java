@@ -21,6 +21,7 @@ import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.roadrailalignment.FeatureType;
+import org.openstreetmap.josm.plugins.roadrailalignment.geometry.GeometryUtil;
 import org.openstreetmap.josm.tools.Logging;
 
 public final class JosmWayBuilder {
@@ -29,8 +30,8 @@ public final class JosmWayBuilder {
     private JosmWayBuilder() {
     }
 
-    public static Way createWay(List<EastNorth> eastNorthPoints, FeatureType featureType) {
-        return createWay(eastNorthPoints, featureType, false, 0.0, Collections.emptyList());
+    public static Way createWay(List<EastNorth> eastNorthPoints, FeatureType featureType, boolean simplifyCurves) {
+        return createWay(eastNorthPoints, featureType, false, 0.0, Collections.emptyList(), simplifyCurves);
     }
 
     public static Way createWay(
@@ -38,19 +39,21 @@ public final class JosmWayBuilder {
             FeatureType featureType,
             boolean snapToExistingNodes,
             double nodeSnapToleranceMeters,
-            List<EastNorth> anchorPoints) {
+            List<EastNorth> anchorPoints,
+            boolean simplifyCurves) {
         if (eastNorthPoints == null || eastNorthPoints.size() < 2) {
             throw new IllegalArgumentException(tr("At least two points are required to generate a way."));
         }
+        List<EastNorth> points = simplifyCurves ? GeometryUtil.simplify(eastNorthPoints, 0.5) : eastNorthPoints;
 
         DataSet dataSet = ensureEditDataSet();
-        List<Node> nodes = new ArrayList<>(eastNorthPoints.size());
-        List<Node> newNodes = new ArrayList<>(eastNorthPoints.size());
-        for (int i = 0; i < eastNorthPoints.size(); i++) {
-            EastNorth point = eastNorthPoints.get(i);
+        List<Node> nodes = new ArrayList<>(points.size());
+        List<Node> newNodes = new ArrayList<>(points.size());
+        for (int i = 0; i < points.size(); i++) {
+            EastNorth point = points.get(i);
             double reuseTolerance = reuseToleranceForPoint(
                     i,
-                    eastNorthPoints.size(),
+                    points.size(),
                     point,
                     snapToExistingNodes,
                     nodeSnapToleranceMeters,
@@ -93,23 +96,25 @@ public final class JosmWayBuilder {
             List<EastNorth> eastNorthPoints,
             boolean snapToExistingNodes,
             double nodeSnapToleranceMeters,
-            List<EastNorth> anchorPoints) {
+            List<EastNorth> anchorPoints,
+            boolean simplifyCurves) {
         if (way == null || way.getDataSet() == null) {
             return;
         }
         if (eastNorthPoints == null || eastNorthPoints.size() < 2) {
             throw new IllegalArgumentException(tr("At least two points are required to generate a way."));
         }
+        List<EastNorth> points = simplifyCurves ? GeometryUtil.simplify(eastNorthPoints, 0.5) : eastNorthPoints;
 
         DataSet dataSet = way.getDataSet();
         List<Node> oldNodes = new ArrayList<>(way.getNodes());
-        List<Node> nodes = new ArrayList<>(eastNorthPoints.size());
-        List<Node> newNodes = new ArrayList<>(eastNorthPoints.size());
-        for (int i = 0; i < eastNorthPoints.size(); i++) {
-            EastNorth point = eastNorthPoints.get(i);
+        List<Node> nodes = new ArrayList<>(points.size());
+        List<Node> newNodes = new ArrayList<>(points.size());
+        for (int i = 0; i < points.size(); i++) {
+            EastNorth point = points.get(i);
             double reuseTolerance = reuseToleranceForPoint(
                     i,
-                    eastNorthPoints.size(),
+                    points.size(),
                     point,
                     snapToExistingNodes,
                     nodeSnapToleranceMeters,

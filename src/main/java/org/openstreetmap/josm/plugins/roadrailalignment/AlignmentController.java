@@ -32,6 +32,8 @@ public final class AlignmentController {
     public static final String PROP_NODE_SNAP_TOLERANCE = "nodeSnapToleranceMeters";
     public static final String PROP_EXTRA_LOOP_TURNS = "extraLoopTurns";
     public static final String PROP_TIE_IN_DIRECTION_MODE = "tieInDirectionMode";
+    public static final String PROP_DESIGN_SPEED = "designSpeedKph";
+    public static final String PROP_USE_DESIGN_SPEED = "useDesignSpeed";
 
     private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
     private final List<EastNorth> controlPoints = new ArrayList<>();
@@ -39,12 +41,16 @@ public final class AlignmentController {
     private AlignmentMode alignmentMode = AlignmentMode.BASIC_ALIGNMENT;
     private double sampleIntervalMeters = 20.0;
     private double radiusMeters = 200.0;
+    private double designSpeedKph = 80.0;
+    private boolean useDesignSpeed = false;
     private double spiralLengthMeters = 60.0;
     private String statusMessage = "";
     private boolean continuousMode = true;
     private boolean useSpiralTransitions = true;
     private boolean continuousRampCurvature = false;
     private boolean autoOptimizeTwoTieRamp = true;
+    private boolean autoUpdateSpiralLength = true;
+    private boolean simplifyCurves = true;
     private boolean applyOptimizedTwoTieRampParameters = false;
     private boolean snapToExistingNodes = true;
     private double nodeSnapToleranceMeters = 8.0;
@@ -78,6 +84,34 @@ public final class AlignmentController {
         propertyChangeSupport.firePropertyChange(PROP_ALIGNMENT_MODE, old, alignmentMode);
     }
 
+    public double getDesignSpeedKph() {
+        return designSpeedKph;
+    }
+
+    public void setDesignSpeedKph(double designSpeedKph) {
+        double normalized = Math.max(10.0, designSpeedKph);
+        double old = this.designSpeedKph;
+        if (Double.compare(old, normalized) == 0) {
+            return;
+        }
+        this.designSpeedKph = normalized;
+        propertyChangeSupport.firePropertyChange(PROP_DESIGN_SPEED, old, normalized);
+    }
+
+    public boolean isUseDesignSpeed() {
+        return useDesignSpeed;
+    }
+
+    public void setUseDesignSpeed(boolean useDesignSpeed) {
+        boolean old = this.useDesignSpeed;
+        if (old == useDesignSpeed) {
+            return;
+        }
+        this.useDesignSpeed = useDesignSpeed;
+        propertyChangeSupport.firePropertyChange(PROP_USE_DESIGN_SPEED, old, useDesignSpeed);
+    }
+
+
     public double getSampleIntervalMeters() {
         return sampleIntervalMeters;
     }
@@ -92,6 +126,14 @@ public final class AlignmentController {
         propertyChangeSupport.firePropertyChange(PROP_SAMPLE_INTERVAL, old, normalized);
     }
 
+    public static double recommendSpiralLengthMeters(double radiusMeters) {
+        double radius = Math.max(1.0, radiusMeters);
+        double recommended = radius * RECOMMENDED_SPIRAL_RATIO;
+        recommended = Math.max(MIN_RECOMMENDED_SPIRAL_LENGTH,
+                Math.min(MAX_RECOMMENDED_SPIRAL_LENGTH, recommended));
+        return Math.round(recommended / 5.0) * 5.0;
+    }
+
     public double getRadiusMeters() {
         return radiusMeters;
     }
@@ -104,15 +146,41 @@ public final class AlignmentController {
         }
         this.radiusMeters = normalized;
         propertyChangeSupport.firePropertyChange(PROP_RADIUS, old, normalized);
+        if (autoUpdateSpiralLength) {
+            setSpiralLengthMeters(recommendSpiralLengthMeters(normalized));
+        }
+    }
+
+    public boolean isAutoUpdateSpiralLength() {
+        return autoUpdateSpiralLength;
+    }
+
+    public void setAutoUpdateSpiralLength(boolean autoUpdateSpiralLength) {
+        boolean old = this.autoUpdateSpiralLength;
+        if (old == autoUpdateSpiralLength) {
+            return;
+        }
+        this.autoUpdateSpiralLength = autoUpdateSpiralLength;
+        propertyChangeSupport.firePropertyChange("autoUpdateSpiralLength", old, autoUpdateSpiralLength);
     }
 
     public double getSpiralLengthMeters() {
         return spiralLengthMeters;
     }
 
-    public static double recommendSpiralLengthMeters(double radiusMeters) {
+    public double recommendSpiralLengthBySpeed(double radiusMeters, double designSpeedKph) {
         double radius = Math.max(1.0, radiusMeters);
-        double recommended = radius * RECOMMENDED_SPIRAL_RATIO;
+        double recommended;
+
+        if (featureType == FeatureType.RAIL || featureType == FeatureType.HIGH_SPEED_RAIL) {
+            // Railway: L = 12 * V^2 / R
+            double vMs = designSpeedKph / 3.6;
+            recommended = 12.0 * Math.pow(vMs, 2) / radius;
+        } else {
+            // Highway: L = V^3 / (46.7 * R)
+            recommended = Math.pow(designSpeedKph, 3) / (46.7 * radius);
+        }
+
         recommended = Math.max(MIN_RECOMMENDED_SPIRAL_LENGTH,
                 Math.min(MAX_RECOMMENDED_SPIRAL_LENGTH, recommended));
         return Math.round(recommended / 5.0) * 5.0;
@@ -245,6 +313,19 @@ public final class AlignmentController {
                 PROP_APPLY_OPTIMIZED_TWO_TIE_PARAMETERS,
                 old,
                 applyOptimizedTwoTieRampParameters);
+    }
+
+    public boolean isSimplifyCurves() {
+        return simplifyCurves;
+    }
+
+    public void setSimplifyCurves(boolean simplifyCurves) {
+        boolean old = this.simplifyCurves;
+        if (old == simplifyCurves) {
+            return;
+        }
+        this.simplifyCurves = simplifyCurves;
+        propertyChangeSupport.firePropertyChange("simplifyCurves", old, simplifyCurves);
     }
 
     public boolean isSnapToExistingNodes() {
